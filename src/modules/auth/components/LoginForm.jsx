@@ -1,0 +1,117 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Input from '@/components/Input';
+import Button from '@/components/Button';
+import { useAuth } from '@/context/AuthContext';
+
+const EyeIcon = ({ open }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/40 hover:text-white/80 transition-colors">
+    {open ? (
+      <>
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    ) : (
+      <>
+        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+        <path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+        <line x1="2" y1="2" x2="22" y2="22" />
+      </>
+    )}
+  </svg>
+);
+
+const LoginForm = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.message);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-[400px] bg-white/[0.03] backdrop-blur-2xl p-8 rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(255,255,255,0.03)] relative transition-all duration-500 hover:shadow-[0_0_80px_rgba(255,255,255,0.06)] hover:-translate-y-1 hover:bg-white/[0.04] hover:border-white/20">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight text-white">Welcome back</h2>
+          <p className="text-white/40 text-sm">Please enter your details to sign in.</p>
+        </div>
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-xs font-medium">
+              {error}
+            </div>
+          )}
+
+          <Input
+            label="Email Address"
+            type="email"
+            placeholder="name@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            rightSlot={
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="flex items-center justify-center p-1"
+              >
+                <EyeIcon open={showPassword} />
+              </button>
+            }
+          />
+
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" className="w-4 h-4 bg-white/5 border-white/10 rounded cursor-pointer" />
+              <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors">Remember me</span>
+            </label>
+            <a href="#" className="text-xs font-medium text-white/40 hover:text-white transition-colors">Forgot password?</a>
+          </div>
+
+          <Button variant="primary" className="mt-2 py-3" type="submit" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </Button>
+
+          <Button variant="secondary" className="py-3" type="button" onClick={() => navigate('/register')}>
+            Create an account
+          </Button>
+        </form>
+
+        <p className="text-center text-xs text-white/20">
+          By clicking continue, you agree to our <a href="#" className="text-white/40 hover:text-white underline underline-offset-4">Terms</a> and <a href="#" className="text-white/40 hover:text-white underline underline-offset-4">Privacy</a>.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;
