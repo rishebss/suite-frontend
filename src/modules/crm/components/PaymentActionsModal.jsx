@@ -80,14 +80,14 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
           payment_method: method, cycle_period_days: 30, cycle_count: 1,
           start_date: new Date().toISOString().slice(0, 10), remarks: `${remarks} [one-time pipeline rule]`,
         });
-        setSuccess("One-time pipeline rule saved — applies to all deals in this pipeline.");
+        setSuccess("One-time pipeline rule saved.");
       } else {
         await axios.post("/api/payments/schedules/", {
           pipeline: pipeline.id, amount: parseFloat(amount), payment_for: title,
           payment_method: method, cycle_period_days: parseInt(cycleDays),
           cycle_count: parseInt(cycleCount), start_date: startDate, remarks,
         });
-        setSuccess(`Recurring rule: ₹${total.toLocaleString()} over ${cycleCount} cycles — applies to all deals.`);
+        setSuccess(`Recurring rule: ₹${total.toLocaleString()} over ${cycleCount} cycles.`);
       }
       setTimeout(() => onClose(), 900);
     } catch (err) {
@@ -107,7 +107,7 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
             </div>
             <div>
               <h2 className="text-base font-medium text-white uppercase tracking-wider">Payment Actions</h2>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">Pipeline: <span className="text-blue-400 font-semibold">{pipeline?.name || "Client"}</span> · applies to all deals</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">Pipeline: <span className="text-blue-400 font-semibold">{pipeline?.name || "Client"}</span></p>
             </div>
           </div>
           <button onClick={onClose} disabled={loading} className="p-2 text-white/20 hover:text-white rounded-lg hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"><X size={16} /></button>
