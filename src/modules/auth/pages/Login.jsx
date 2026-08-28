@@ -4,7 +4,7 @@ import Flow from '../../../components/Flow';
 
 const Login = () => {
   return (
-    <div className="min-h-screen lg:h-screen bg-black text-white relative flex flex-col items-center lg:overflow-hidden overflow-y-auto overflow-x-hidden font-inter">
+    <div className="min-h-screen lg:h-screen bg-black text-white relative flex flex-col items-center overflow-y-auto overflow-x-hidden font-inter custom-scrollbar">
       {/* Dynamic 3D Atmosphere - Fixed Background */}
       <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
         <Flow
@@ -32,7 +32,7 @@ const Login = () => {
       </div>
 
       {/* Header */}
-      <header className="w-full max-w-[1200px] px-8 py-10 flex justify-between items-center z-20">
+      <header className="w-full max-w-[1300px] px-8 py-6 flex justify-between items-center z-20">
         <div className="flex items-center gap-2 group cursor-pointer">
           <span className="text-2xl font-bold tracking-tight">Nurturely</span>
           <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
@@ -43,7 +43,7 @@ const Login = () => {
       </header>
 
       {/* Main Content */}
-      <main className="w-full max-w-[1200px] flex-1 flex flex-col lg:flex-row items-center justify-between px-8 gap-16 relative z-10 pb-20 mt-10">
+      <main className="w-full max-w-[1300px] flex-1 flex flex-col lg:flex-row items-center justify-between px-8 gap-10 relative z-10 pb-8 mt-4">
 
         {/* Left Side: Hero Section */}
         <div className="flex-1 space-y-10">
@@ -83,7 +83,7 @@ const Login = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-[1200px] px-8 py-10 flex justify-between items-center z-10 border-t border-white/5">
+      <footer className="w-full max-w-[1200px] px-8 py-6 flex justify-between items-center z-10 border-t border-white/5">
         <p className="text-xs text-white/20">© 2026 Hertex.in</p>
         <div className="flex gap-8">
           <a href="#" className="text-xs text-white/20 hover:text-white transition-colors">Privacy Policy</a>

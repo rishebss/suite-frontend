@@ -68,8 +68,8 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="w-full max-w-[400px] bg-white/[0.03] backdrop-blur-2xl p-8 rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(255,255,255,0.03)] relative transition-all duration-500 hover:shadow-[0_0_80px_rgba(255,255,255,0.06)] hover:-translate-y-1 hover:bg-white/[0.04] hover:border-white/20">
-      <div className="space-y-6">
+    <div className="w-full max-w-[400px] p-8 rounded-xl relative overflow-hidden transition-all duration-500 hover:-translate-y-1"      style={{ background: 'linear-gradient(135deg, rgba(21, 21, 21, 0.1) 0%, rgba(255,255,255,0.05) 100%)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.18)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+      <div className="space-y-6 relative z-10">
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight text-white">Welcome back</h2>
           <p className="text-white/40 text-sm">Please enter your details to sign in.</p>
@@ -109,15 +109,9 @@ const LoginForm = () => {
             }
           />
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <input type="checkbox" className="w-4 h-4 bg-white/5 border-white/10 rounded cursor-pointer" />
-              <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors">Remember me</span>
-            </label>
-            <a href="#" className="text-xs font-medium text-white/40 hover:text-white transition-colors">Forgot password?</a>
-          </div>
+          
 
-          <Button className="mt-2 py-3 bg-white/90 !text-black hover:bg-white/90 font-bold" type="submit" disabled={isLoading}>
+          <Button className="mt-8 py-3 bg-white/90 !text-black hover:bg-white/90 font-bold" type="submit" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
 
