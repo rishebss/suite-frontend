@@ -14,6 +14,7 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
   const [cycleDays, setCycleDays] = useState(30);
   const [cycleCount, setCycleCount] = useState(3);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -22,7 +23,7 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
   useEffect(() => {
     if (!isOpen) {
       setAmount(""); setTitle(""); setRemarks(""); setCycleDays(30); setCycleCount(3);
-      setStartDate(new Date().toISOString().slice(0, 10)); setIsRecurring(false);
+      setStartDate(new Date().toISOString().slice(0, 10)); setDueDate(""); setIsRecurring(false);
       setError(""); setSuccess(""); setMethodOpen(false);
     } else if (pipeline?.id) {
       axios.get("/api/payments/schedules/", { params: { pipeline: pipeline.id } }).then((r) => {
@@ -35,6 +36,7 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
           setCycleDays(rule.cycle_period_days ?? 30);
           setCycleCount(rule.cycle_count ?? 3);
           setStartDate(rule.start_date ?? new Date().toISOString().slice(0, 10));
+          setDueDate(rule.due_date || "");
           setRemarks(rule.remarks?.replace(" [one-time pipeline rule]", "") ?? "");
           setIsRecurring(String(rule.cycle_count) !== "1");
         }
@@ -78,14 +80,14 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
         await axios.post("/api/payments/schedules/", {
           pipeline: pipeline.id, amount: parseFloat(amount), payment_for: title,
           payment_method: method, cycle_period_days: 30, cycle_count: 1,
-          start_date: new Date().toISOString().slice(0, 10), remarks: `${remarks} [one-time pipeline rule]`,
+          start_date: new Date().toISOString().slice(0, 10), due_date: dueDate || null, remarks: `${remarks} [one-time pipeline rule]`,
         });
         setSuccess("One-time pipeline rule saved.");
       } else {
         await axios.post("/api/payments/schedules/", {
           pipeline: pipeline.id, amount: parseFloat(amount), payment_for: title,
           payment_method: method, cycle_period_days: parseInt(cycleDays),
-          cycle_count: parseInt(cycleCount), start_date: startDate, remarks,
+          cycle_count: parseInt(cycleCount), start_date: startDate, due_date: dueDate || null, remarks,
         });
         setSuccess(`Recurring rule: ₹${total.toLocaleString()} over ${cycleCount} cycles.`);
       }
@@ -151,6 +153,13 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Retainer - Q1" className="bg-white/5 border-zinc-800 h-10 text-sm text-white placeholder:text-white/10 focus:border-blue-500/40" />
           </div>
 
+          {!isRecurring && (
+            <div className="space-y-2">
+              <label className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30 block">Due Date (optional)</label>
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full h-9 rounded-md bg-white/5 border border-zinc-800 px-2 text-xs text-white outline-none focus:border-blue-500/40" />
+              <p className="text-[9px] text-white/20 uppercase tracking-widest">If set, deal shows ₹ Pending when overdue & unpaid</p>
+            </div>
+          )}
           {isRecurring && (
             <div className="rounded-lg border border-zinc-800 bg-white/[0.02] overflow-hidden animate-in fade-in">
               <div className="p-4 space-y-3">
@@ -168,6 +177,11 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
                     <label className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30 block">Start *</label>
                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full h-9 rounded-md bg-white/5 border border-zinc-800 px-2 text-xs text-white outline-none focus:border-blue-500/40" />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30 block">Due Date (optional)</label>
+                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full h-9 rounded-md bg-white/5 border border-zinc-800 px-2 text-xs text-white outline-none focus:border-blue-500/40" />
+                  <p className="text-[9px] text-white/20 uppercase tracking-widest">Overdue & unpaid cycle shows ₹ Pending</p>
                 </div>
                 <div className="flex justify-between text-xs border-t border-white/5 pt-3">
                   <span className="text-[9px] uppercase tracking-widest text-white/30">Total per deal</span><span className="text-xs font-bold text-white">₹{total.toLocaleString("en-IN")} <span className="text-white/30 font-medium">· {cycleCount} × ₹{(parseFloat(amount || 0)).toLocaleString("en-IN")}</span></span>

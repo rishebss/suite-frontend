@@ -1,31 +1,43 @@
 import LoginForm from '../components/LoginForm';
-import logo from '../../../assets/hertexlogowhite.svg';
-import Beams from '../../../components/Beams';
+import logo from '../../../assets/logowhite.svg';
+import Flow from '../../../components/Flow';
 
 const Login = () => {
   return (
     <div className="min-h-screen lg:h-screen bg-black text-white relative flex flex-col items-center lg:overflow-hidden overflow-y-auto overflow-x-hidden font-inter">
       {/* Dynamic 3D Atmosphere - Fixed Background */}
       <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
-        <Beams
-          beamWidth={3.5}
-          beamHeight={30}
-          beamNumber={10}
-          lightColor="#ffffff"
-          speed={2}
-          noiseIntensity={1.75}
-          scale={0.2}
-          rotation={30}
+        <Flow
+          horizonColor="#5227FF"
+          waveColor="#FF9FFC"
+          crestColor="#FFFFFF"
+          speed={0.4}
+          amplitude={4.5}
+          waveScale={0.6}
+          waveRatio={0.9}
+          swell={35}
+          turbulence={20}
+          tilt={1.2}
+          zoom={0.9}
+          height={3}
+          fogDepth={15}
+          detail="medium"
+          brightness={1}
+          opacity={1}
+          mouseInteraction
+          parallaxStrength={0.5}
+          grain
+          grainIntensity={0.05}
         />
       </div>
 
       {/* Header */}
       <header className="w-full max-w-[1200px] px-8 py-10 flex justify-between items-center z-20">
         <div className="flex items-center gap-2 group cursor-pointer">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-            <img src={logo} alt="ByteHive" className="w-full h-full object-cover" />
+          <span className="text-2xl font-bold tracking-tight">Nurturely</span>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+            <img src={logo} alt="Nurturely" className="w-full h-full object-cover" />
           </div>
-          <span className="text-xl font-bold tracking-tight">Hertex</span>
         </div>
 
       </header>

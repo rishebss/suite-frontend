@@ -1,18 +1,19 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Loader, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, Loader } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useMenu } from "@/context/MenuContext";
 import { getLucideIcon } from "@/utils/iconMapper";
-import NotificationBell from "../modules/work-management/components/shared/NotificationBell";
-import logo from "../assets/hertexlogowhite.svg";
+import logo from "../assets/logowhite.svg";
+import ConfirmLogoutModal from "./ConfirmLogoutModal";
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const { sections, loading, error } = useMenu();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const isActive = (href) => {
     if (location.pathname === href) return true;
@@ -23,6 +24,7 @@ const Sidebar = () => {
   };
 
   return (
+    <>
     <div
       className={cn(
         "h-screen bg-black border-r border-white/5 flex flex-col font-inter z-30 relative",
@@ -32,18 +34,6 @@ const Sidebar = () => {
     >
       <div className="absolute top-0 left-0 w-full h-full bg-radial-[circle_at_0%_0%] from-white/5 to-transparent pointer-events-none" />
 
-      <button
-        onClick={() => setCollapsed((v) => !v)}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        title={collapsed ? "Expand" : "Collapse"}
-        className={cn(
-          "absolute z-40 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-zinc-900/90 text-white/60 shadow-lg transition-colors",
-          collapsed ? "-right-3 top-1/2" : "right-3 top-5",
-          "hover:text-white hover:bg-zinc-800",
-        )}
-      >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
 
       <Link
         to="/dashboard"
@@ -52,18 +42,18 @@ const Sidebar = () => {
           !collapsed && "pr-12",
         )}
       >
-        <div className="w-8 h-8 rounded-sm flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 overflow-hidden bg-blue-700 shrink-0">
+        {!collapsed && (
+          <span className="text-2xl font-bold tracking-tight text-white whitespace-nowrap">
+            NURTURELY
+          </span>
+        )}
+        <div className="w-10 h-10 ml-[-6px] rounded-sm flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 overflow-hidden bg-transparent shrink-0">
           <img
             src={logo}
-            alt="ByteHive"
+            alt="Nurturely"
             className="w-full h-full object-cover"
           />
         </div>
-        {!collapsed && (
-          <span className="text-xl font-bold tracking-tight text-white whitespace-nowrap">
-            Hertex
-          </span>
-        )}
       </Link>
 
       <div className="flex-1 px-3 py-6 space-y-6 relative z-10 overflow-y-auto custom-scrollbar">
@@ -146,7 +136,7 @@ const Sidebar = () => {
       </div>
 
       <div className="p-3 border-t border-white/5 relative z-10 bg-black">
-        <div className={cn("flex items-center p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]", collapsed ? "justify-center" : "gap-2.5")}>
+        <div className={cn("flex items-center p-2 rounded-lg bg-white/[0.03] border border-white/[0.12]", collapsed ? "justify-center" : "gap-2.5")}>
           <div className="w-7 h-7 rounded-md bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-[11px] shrink-0">
             {user?.first_name?.charAt(0).toUpperCase() ||
               user?.username?.charAt(0).toUpperCase() ||
@@ -164,12 +154,11 @@ const Sidebar = () => {
                   {user?.email || "admin@bytehive.com"}
                 </p>
               </div>
-              <NotificationBell />
             </>
           )}
           <button
-            onClick={logout}
-            className="p-1.5 rounded-md hover:bg-white/10 text-white/30 hover:text-white transition-colors"
+            onClick={() => setShowLogoutModal(true)}
+            className="p-1.5 rounded-md bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-colors"
             title="Logout"
           >
             <LogOut size={14} />
@@ -177,6 +166,14 @@ const Sidebar = () => {
         </div>
       </div>
     </div>
+
+      {showLogoutModal && (
+        <ConfirmLogoutModal
+          onConfirm={() => { setShowLogoutModal(false); logout(); }}
+          onCancel={() => setShowLogoutModal(false)}
+        />
+      )}
+    </>
   );
 };
 

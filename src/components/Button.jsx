@@ -2,7 +2,7 @@ import React from 'react';
 
 const Button = ({ children, variant = 'primary', className = '', ...props }) => {
   const variants = {
-    primary: 'bg-white text-black hover:bg-gray-100 active:scale-[0.98]',
+    primary: 'bg-blue-500/10 text-white border border-blue-500/30 hover:bg-blue-500/30 active:scale-[0.98]',
     secondary: 'bg-white/5 text-white border border-white/10 hover:bg-white/10 active:scale-[0.98]',
   };
 

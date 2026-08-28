@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, Phone, Tag, Calendar, Database, FileText, User, Trash2, Wallet, Clock, Users, Save, ChevronDown, Check, Plus, Loader2, MessageSquare, CalendarPlus, History, Repeat } from 'lucide-react';
 import { TbEdit } from "react-icons/tb";
+import { FaRupeeSign } from "react-icons/fa";
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
@@ -15,6 +16,9 @@ const STATUS_STYLES = {
     Inactive: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
     Won:      'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     Lost:     'bg-red-500/10 text-red-400 border-red-500/20',
+    'Payment Pending': 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+    Due:      'bg-red-500/15 text-red-400 border-red-500/30',
+    Paid:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 };
 
 const PRIORITY_STYLES = {
@@ -589,8 +593,9 @@ const DealDetailsDialog = ({ isOpen, onClose, deal, onDelete, eligibleUsers = []
                                     <h2 className="text-base font-semibold text-white uppercase tracking-wider truncate">{localDeal?.name || 'Unknown Deal'}</h2>
                                 )}
                                 <div className="flex items-center gap-2 mt-1.5">
-                                    <span className={cn("text-[9px] px-2 py-0.5 rounded-sm border font-semibold uppercase tracking-[0.15em]", STATUS_STYLES[localDeal?.status] || STATUS_STYLES.Lead)}>
-                                        {localDeal?.status}
+                                    <span className={cn("text-[9px] px-2 py-0.5 rounded-sm border font-semibold uppercase tracking-[0.15em] inline-flex items-center gap-1", STATUS_STYLES[localDeal?.status] || STATUS_STYLES.Lead)}>
+                                        {(localDeal?.status === 'Payment Pending' || localDeal?.status === 'Due' || localDeal?.status === 'Paid') && <FaRupeeSign size={9} />}
+                                        {localDeal?.status === 'Payment Pending' ? 'Pending' : localDeal?.status}
                                     </span>
                                     <span className={cn("text-[9px] px-2 py-0.5 rounded-sm border font-semibold uppercase tracking-[0.15em]", PRIORITY_STYLES[localDeal?.priority] || PRIORITY_STYLES.Medium)}>
                                         {localDeal?.priority}

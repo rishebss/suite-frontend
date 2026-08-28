@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { LuSettings2 } from "react-icons/lu";
 import { Trash2, UserPlus, ArrowRightLeft } from 'lucide-react';
 import { BiSolidAddToQueue } from "react-icons/bi";
+import { FaRupeeSign } from "react-icons/fa";
 
 export const KanbanCardUI = ({ card, isOverlay, onView, onDelete, onAssign, onMoveToPipeline, onCopyToPipeline, showMenu: showMenuProp, setShowMenu: setShowMenuProp, isSelectMode, isSelected, onToggleSelect }) => {
   const [showMenuInternal, setShowMenuInternal] = useState(false);
@@ -31,6 +32,9 @@ export const KanbanCardUI = ({ card, isOverlay, onView, onDelete, onAssign, onMo
       'Customer': 'from-green-500/10 to-green-500/5 border-green-500/20 text-green-400',
       'Inactive': 'from-zinc-500/10 to-zinc-500/5 border-zinc-500/20 text-zinc-400',
       'Retarget': 'from-amber-500/10 to-amber-500/5 border-amber-500/20 text-amber-400',
+      'Payment Pending': 'from-purple-500/15 to-purple-500/10 border-purple-500/30 text-purple-400',
+      'Due': 'from-red-500/15 to-red-500/10 border-red-500/30 text-red-400',
+      'Paid': 'from-emerald-500/15 to-emerald-500/10 border-emerald-500/30 text-emerald-400',
     };
     return colors[status] || colors['Lead'];
   };
@@ -136,10 +140,11 @@ export const KanbanCardUI = ({ card, isOverlay, onView, onDelete, onAssign, onMo
         <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/5">
           <div className="flex items-center gap-2 pointer-events-none">
             <span className={cn(
-              'px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-wider border bg-gradient-to-b',
+              'px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-wider border bg-gradient-to-b inline-flex items-center gap-1',
               getStatusColor(card.status)
             )}>
-              {card.status}
+              {(card.status === 'Payment Pending' || card.status === 'Due' || card.status === 'Paid') && <FaRupeeSign size={9} />}
+              {card.status === 'Payment Pending' ? 'Pending' : card.status}
             </span>
             <span className={cn(
               'px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider border',

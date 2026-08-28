@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
+import { IoMdPerson } from 'react-icons/io';
+
+const GUEST_EMAIL = 'rishebs123456@gmail.com';
+const GUEST_PASSWORD = 'Admin@12345';
 
 const EyeIcon = ({ open }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/40 hover:text-white/80 transition-colors">
@@ -38,6 +42,22 @@ const LoginForm = () => {
     setIsLoading(true);
 
     const result = await login(email, password);
+
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.message);
+      setIsLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setEmail(GUEST_EMAIL);
+    setPassword(GUEST_PASSWORD);
+    setError('');
+    setIsLoading(true);
+
+    const result = await login(GUEST_EMAIL, GUEST_PASSWORD);
 
     if (result.success) {
       navigate('/dashboard');
@@ -97,17 +117,30 @@ const LoginForm = () => {
             <a href="#" className="text-xs font-medium text-white/40 hover:text-white transition-colors">Forgot password?</a>
           </div>
 
-          <Button variant="primary" className="mt-2 py-3" type="submit" disabled={isLoading}>
+          <Button className="mt-2 py-3 bg-white/90 !text-black hover:bg-white/90 font-bold" type="submit" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
 
-          <Button variant="secondary" className="py-3" type="button" onClick={() => navigate('/register')}>
-            Create an account
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-white/10" />
+            <span className="flex-shrink-0 mx-4 text-xs text-white/40">or</span>
+            <div className="flex-grow border-t border-white/10" />
+          </div>
+
+          <Button
+            className="mt-2 py-3 bg-white/90 !text-black hover:bg-white/90 font-bold"
+            type="button"
+            onClick={handleGuestLogin}
+            disabled={isLoading}
+            aria-label="Sign in as Guest"
+          >
+            <IoMdPerson className="w-4 h-4" />
+            {isLoading ? 'Signing in...' : 'Sign in as Guest'}
           </Button>
         </form>
 
         <p className="text-center text-xs text-white/20">
-          By clicking continue, you agree to our <a href="#" className="text-white/40 hover:text-white underline underline-offset-4">Terms</a> and <a href="#" className="text-white/40 hover:text-white underline underline-offset-4">Privacy</a>.
+          By clicking continue, you agree to our Terms and Conditions.
         </p>
       </div>
     </div>
