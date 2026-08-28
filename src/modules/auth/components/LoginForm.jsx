@@ -111,7 +111,7 @@ const LoginForm = () => {
 
           
 
-          <Button className="mt-8 py-3 bg-white/90 !text-black hover:bg-white/90 font-bold" type="submit" disabled={isLoading}>
+          <Button className="mt-4 py-3 !text-white hover:bg-white/20 font-bold border border-white/20" style={{ background: 'rgba(255,255,255,0.08)' }} type="submit" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
 
@@ -122,7 +122,8 @@ const LoginForm = () => {
           </div>
 
           <Button
-            className="mt-2 py-3 bg-white/90 !text-black hover:bg-white/90 font-bold"
+            className="mt-2 py-3 !text-white hover:bg-white/20 font-bold border border-white/20"
+            style={{ background: 'rgba(255,255,255,0.08)' }}
             type="button"
             onClick={handleGuestLogin}
             disabled={isLoading}
