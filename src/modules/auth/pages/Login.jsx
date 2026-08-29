@@ -8,9 +8,9 @@ const Login = () => {
       {/* Dynamic 3D Atmosphere - Fixed Background */}
       <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
         <Flow
-          horizonColor="#5227FF"
-          waveColor="#FF9FFC"
-          crestColor="#FFFFFF"
+          horizonColor="#080B40"
+          waveColor="#2C588A"
+          crestColor="#6CA8E6"
           speed={0.4}
           amplitude={4.5}
           waveScale={0.6}
@@ -22,7 +22,7 @@ const Login = () => {
           height={3}
           fogDepth={15}
           detail="medium"
-          brightness={1}
+          brightness={1.6}
           opacity={1}
           mouseInteraction
           parallaxStrength={0.5}

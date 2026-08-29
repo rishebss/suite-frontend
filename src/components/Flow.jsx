@@ -128,8 +128,8 @@ void main() {
 const ctxMap = new WeakMap();
 
 const Flow = ({
-  horizonColor = '#5227FF',
-  waveColor = '#FF9FFC',
+  horizonColor = '#080B40',
+  waveColor = '#2C588A',
   crestColor = '#FFFFFF',
   speed = 0.4,
   amplitude = 2.5,
