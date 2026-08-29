@@ -11,6 +11,7 @@ import Login from "./modules/auth/pages/Login";
 import Dashboard from "./modules/dashboard/pages/Dashboard";
 import CRM from "./modules/crm/pages/CRM";
 import Contacts from "./modules/contacts/pages/Contacts";
+import PaymentsPage from "./modules/payments/pages/PaymentsPage";
 import DocTools from "./modules/docs/pages/DocTools";
 import Accounts from "./modules/accounts/pages/Accounts";
 import Media from "./modules/media/pages/Media";
@@ -119,6 +120,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LMS />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payments"
+              element={
+                <ProtectedRoute>
+                  <PaymentsPage />
                 </ProtectedRoute>
               }
             />
