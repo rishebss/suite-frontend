@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Wallet, Search, Filter, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchPayments, fetchSchedules, fetchPipelines, fetchDashboard } from "../services/paymentsService";
+import { fetchPayments, fetchSchedules, fetchPipelines, fetchDashboard, fetchAssignableUsers } from "../services/paymentsService";
 import PaymentStats from "../components/PaymentStats";
 import PaymentTable from "../components/PaymentTable";
 import ScheduleTable from "../components/ScheduleTable";
@@ -17,10 +17,24 @@ export default function PaymentsPage(){
   const [pipelines,setPipelines]=useState([]);
   const [dash,setDash]=useState(null);
   const [loading,setLoading]=useState(true);
-  const [filters,setFilters]=useState({search:"",pipeline:"",method:""});
+  const [filters,setFilters]=useState({search:"",pipeline:"",method:"",user:""});
   const [filterOpen,setFilterOpen]=useState(false);
   const [pipeSubOpen,setPipeSubOpen]=useState(false);
   const [methodSubOpen,setMethodSubOpen]=useState(false);
+  const [userSubOpen,setUserSubOpen]=useState(false);
+  const [users,setUsers]=useState([]);
+  const [usersLoading,setUsersLoading]=useState(false);
+  const [userSearch,setUserSearch]=useState("");
+  const loadUsers=async()=>{
+    setUsersLoading(true);
+    try{
+      const res=await fetchAssignableUsers();
+      setUsers(Array.isArray(res.data)?res.data:[]);
+    } catch{ setUsers([]); } finally{ setUsersLoading(false); }
+  };
+  useEffect(()=>{
+    if(userSubOpen && users.length===0) loadUsers();
+  },[userSubOpen]);
   const [searchModalOpen,setSearchModalOpen]=useState(false);
   const [pipelinesLoading,setPipelinesLoading]=useState(false);
   const [pipelinePage,setPipelinePage]=useState(1);
@@ -49,6 +63,11 @@ export default function PaymentsPage(){
     loadPipelines(1,false);
   },[pipeSubOpen]);
   const filteredForSearch = useMemo(()=> payments, [payments]);
+  const filteredUsers = useMemo(()=>{
+    const q=userSearch.trim().toLowerCase();
+    if(!q) return users;
+    return users.filter(u=>`${u.first_name||""} ${u.last_name||""} ${u.email||""}`.toLowerCase().includes(q));
+  },[users,userSearch]);
   const payByMonth=(dash?.payments?.by_month||[]).map(m=>({label:m.label.slice(0,3),value:m.value}));
   const payByPipeline=(dash?.payments?.by_pipeline||[]).map(p=>({label:(p.crm__pipeline__name||"—").slice(0,10),value:Number(p.total||0)}));
   const payByMethod=(dash?.payments?.by_method||[]).map((m,i)=>({label:m.payment_method,value:Number(m.total),color:["#f59e0b","#10b981","#6366f1","#ec4899"][i%4]}));
@@ -72,16 +91,16 @@ export default function PaymentsPage(){
           <div className="flex items-center gap-2">
             <button onClick={()=>setSearchModalOpen(true)} className="h-9 w-9 rounded-md bg-zinc-900/50 border border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800 flex items-center justify-center"><Search size={14}/></button>
             <div className="relative">
-              <button onClick={()=>setFilterOpen(v=>!v)} className={cn("h-9 w-9 rounded-md border flex items-center justify-center transition-all", filters.pipeline||filters.method ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-zinc-900/50 border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800")}>
+              <button onClick={()=>setFilterOpen(v=>!v)} className={cn("h-9 w-9 rounded-md border flex items-center justify-center transition-all", filters.pipeline||filters.method||filters.user ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-zinc-900/50 border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800")}>
                 <Filter size={14} />
               </button>
               {filterOpen && (
                 <>
-                  <div className="fixed inset-0 z-10" onClick={()=>{setFilterOpen(false); setPipeSubOpen(false); setMethodSubOpen(false);}} />
+                  <div className="fixed inset-0 z-10" onClick={()=>{setFilterOpen(false); setPipeSubOpen(false); setMethodSubOpen(false); setUserSubOpen(false);}} />
                   <div className="absolute right-0 top-full mt-2 w-72 rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl z-20 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-white">Filters</p>
-                      {(filters.pipeline||filters.method) && <button onClick={()=>setFilters({...filters, pipeline:"",method:""})} className="text-[10px] font-medium uppercase tracking-widest text-blue-400 hover:text-blue-300">Clear</button>}
+                      {(filters.pipeline||filters.method||filters.user) && <button onClick={()=>setFilters({...filters, pipeline:"",method:"",user:""})} className="text-[10px] font-medium uppercase tracking-widest text-blue-400 hover:text-blue-300">Clear</button>}
                     </div>
                     <div className="p-2 space-y-2">
                       <div className="rounded-md border border-white/5 bg-white/[0.02] overflow-hidden">
@@ -107,7 +126,30 @@ export default function PaymentsPage(){
                         )}
                       </div>
                       <div className="rounded-md border border-white/5 bg-white/[0.02] overflow-hidden">
-                        <button onClick={()=>{setMethodSubOpen(v=>!v); setPipeSubOpen(false);}} className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.04] transition-colors">
+                        <button onClick={()=>{setUserSubOpen(v=>!v); setPipeSubOpen(false); setMethodSubOpen(false);}} className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.04] transition-colors">
+                          <div className="text-left">
+                            <p className="text-[9px] uppercase tracking-widest text-white/30">User</p>
+                            <p className="text-xs font-medium text-white truncate max-w-[160px]">{users.find(u=>String(u.id)===filters.user)?.first_name ? `${users.find(u=>String(u.id)===filters.user)?.first_name} ${users.find(u=>String(u.id)===filters.user)?.last_name||""}`.trim() : filters.user ? `User #${filters.user}` : "All Users"}</p>
+                          </div>
+                          <Plus size={16} className={cn("shrink-0 transition-all", userSubOpen ? "text-blue-400 rotate-45" : "text-white/60")} />
+                        </button>
+                        {userSubOpen && (
+                          <div className="border-t border-white/5 bg-zinc-900 max-h-48 overflow-y-auto custom-scrollbar animate-in slide-in-from-top-1">
+                            <div className="p-2 sticky top-0 bg-zinc-900">
+                              <input value={userSearch} onChange={e=>setUserSearch(e.target.value)} placeholder="Search users…" className="w-full h-7 bg-white/[0.02] border border-white/10 rounded px-2 text-[11px] text-white placeholder:text-white/20 outline-none focus:border-white/20"/>
+                            </div>
+                            {usersLoading && users.length===0 ? <p className="px-3 py-3 text-xs text-white/30">Loading users…</p> : <>
+                              <button onClick={()=>{setFilters({...filters, user:""}); setUserSubOpen(false);}} className={cn("w-full text-left px-3 py-2 text-xs hover:bg-white/5", !filters.user ? "text-blue-400 bg-blue-500/10" : "text-white/70")}>All Users</button>
+                              {filteredUsers.map(u=>(
+                                <button key={u.id} onClick={()=>{setFilters({...filters, user:String(u.id)}); setUserSubOpen(false);}} className={cn("w-full text-left px-3 py-2 text-xs hover:bg-white/5 truncate", String(filters.user)===String(u.id) ? "text-blue-400 bg-blue-500/10" : "text-white/70")}>{`${u.first_name||""} ${u.last_name||""}`.trim() || u.email}</button>
+                              ))}
+                              {!usersLoading && filteredUsers.length===0 && <p className="px-3 py-3 text-xs text-white/30">No users found</p>}
+                            </>}
+                          </div>
+                        )}
+                      </div>
+                      <div className="rounded-md border border-white/5 bg-white/[0.02] overflow-hidden">
+                        <button onClick={()=>{setMethodSubOpen(v=>!v); setPipeSubOpen(false); setUserSubOpen(false);}} className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.04] transition-colors">
                           <div className="text-left">
                             <p className="text-[9px] uppercase tracking-widest text-white/30">Method</p>
                             <p className="text-xs font-medium text-white">{filters.method || "All Methods"}</p>
@@ -125,7 +167,7 @@ export default function PaymentsPage(){
                     </div>
                     <div className="flex gap-2 px-2 pb-3 mt-2">
                       <button onClick={()=>setFilterOpen(false)} className="flex-1 h-8 rounded-md bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all">Apply</button>
-                      <button onClick={()=>setFilters({...filters, pipeline:"",method:""})} className="flex-1 h-8 rounded-md bg-zinc-900/50 border border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800 text-[10px] font-bold uppercase tracking-widest transition-all">Clear</button>
+                      <button onClick={()=>setFilters({...filters, pipeline:"",method:"",user:""})} className="flex-1 h-8 rounded-md bg-zinc-900/50 border border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800 text-[10px] font-bold uppercase tracking-widest transition-all">Clear</button>
                     </div>
                   </div>
                 </>
@@ -133,7 +175,7 @@ export default function PaymentsPage(){
             </div>
           </div>
         </div>
-        {tab==="logs" && <PaymentTable searchQuery={filters.search} pipelineId={filters.pipeline} methodFilter={filters.method} />}
+        {tab==="logs" && <PaymentTable searchQuery={filters.search} pipelineId={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} />}
         {tab==="schedules" && <ScheduleTable rows={schedules}/>}
         {tab==="analytics" && (
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-1">
