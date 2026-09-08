@@ -100,25 +100,25 @@ const ContactsTable = ({
                 </div>
             )}
 
-            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden divide-y divide-zinc-800 shadow-xl relative flex flex-col min-h-0 flex-1">
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl overflow-hidden shadow-xl relative flex flex-col min-h-0 flex-1">
                 {isLoading && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-[4px] z-50 flex items-center justify-center">
                         <RingLoader />
                     </div>
                 )}
 
-                <div className="px-8 py-3 bg-zinc-900/20 border-b border-zinc-800 shrink-0 select-none">
+                <div className="px-8 bg-zinc-900/20 border-b border-zinc-800 shrink-0 select-none">
                     <div className="grid grid-cols-12 gap-4 text-xs font-medium text-white/30 items-center">
-                        <div className="col-span-1 flex items-center gap-3">
+                        <div className="col-span-1 flex items-center gap-3 py-3 pl-3">
                             <button onClick={toggleSelectAll} className="hover:text-blue-400 transition-colors">
                                 {selectedIds.length > 0 && selectedIds.length === contacts.length ? <CheckSquare size={14} className="text-blue-500" /> : <Square size={14} />}
                             </button>
                             <span>#</span>
                         </div>
-                        <div className="col-span-3">Name</div>
-                        <div className="col-span-4">Email</div>
-                        <div className="col-span-2">Phone</div>
-                        <div className="col-span-2 text-right">Actions</div>
+                        <div className="col-span-3 py-3 pl-3">Name</div>
+                        <div className="col-span-4 py-3 pl-3">Email</div>
+                        <div className="col-span-2 py-3 pl-3">Phone</div>
+                        <div className="col-span-2 text-right py-3 pr-3">Actions</div>
                     </div>
                 </div>
 
@@ -130,16 +130,16 @@ const ContactsTable = ({
                         <p className="text-sm text-white/20">No contacts found</p>
                     </div>
                 ) : (
-                    <div ref={listRef} className="divide-y divide-zinc-800 overflow-y-auto custom-scrollbar flex-1">
+                    <div ref={listRef} className="overflow-y-auto custom-scrollbar flex-1">
                         {contacts.map((contact, index) => {
                             const isSelected = selectedIds.includes(contact.id);
                             return (
                                 <div 
                                     key={contact.id} 
                                     onClick={() => setSelectedContact(contact)}
-                                    className="grid grid-cols-12 gap-4 px-8 py-3.5 transition-all items-center group cursor-pointer border-l-2 border-transparent hover:bg-white/[0.02]"
+                                    className="grid grid-cols-12 gap-4 px-8 transition-all group cursor-pointer divide-x divide-zinc-800 border-b border-zinc-800 hover:bg-white/[0.02]"
                                 >
-                                    <div className="col-span-1 flex items-center gap-3">
+                                    <div className="col-span-1 flex items-center gap-3 py-3.5 pl-3">
                                         <button 
                                             onClick={(e) => toggleSelect(contact.id, e)}
                                             className={cn("transition-colors", isSelected ? "text-blue-500" : "text-white/10 group-hover:text-white/30")}
@@ -148,7 +148,7 @@ const ContactsTable = ({
                                         </button>
                                         <span className="text-xs text-white/25">{(currentPage - 1) * pageSize + index + 1}</span>
                                     </div>
-                                    <div className="col-span-3 flex items-center gap-3">
+                                    <div className="col-span-3 flex items-center gap-3 py-3.5 pl-3">
                                         <div className="w-8 h-8 rounded-full border bg-white/5 border-white/10 text-white/40 group-hover:border-blue-500/20 group-hover:bg-blue-500/5 group-hover:text-blue-400 flex items-center justify-center text-xs font-medium shrink-0 transition-all">
                                             {contact.name?.charAt(0).toUpperCase()}
                                         </div>
@@ -156,15 +156,15 @@ const ContactsTable = ({
                                             {contact.name}
                                         </span>
                                     </div>
-                                    <div className="col-span-4 flex items-center gap-2 text-white/40">
+                                    <div className="col-span-4 flex items-center gap-2 text-white/40 py-3.5 pl-3">
                                         <Mail size={11} className="shrink-0" />
                                         <span className="text-xs truncate">{contact.email || '—'}</span>
                                     </div>
-                                    <div className="col-span-2 flex items-center gap-2 text-white/40">
+                                    <div className="col-span-2 flex items-center gap-2 text-white/40 py-3.5 pl-3">
                                         <Phone size={11} className="shrink-0" />
                                         <span className="text-xs truncate">{contact.phone || '—'}</span>
                                     </div>
-                                    <div className="col-span-2 flex items-center justify-end gap-1">
+                                    <div className="col-span-2 flex items-center justify-end gap-1 py-3.5 pr-3">
                                         <button
                                             className="p-1.5 rounded-lg hover:bg-blue-500/10 text-white/20 hover:text-blue-400 transition-colors"
                                             title="View"

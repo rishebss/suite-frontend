@@ -7,7 +7,7 @@ import RingLoader from '@/components/ui/RingLoader';
 
 const fmtINR=v=>`₹${Number(v||0).toLocaleString("en-IN")}`;
 
-export default function PaymentTable({ searchQuery="", pipelineId="", methodFilter="", userFilter="" }){
+export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[] }){
   const [rows,setRows]=useState([]);
   const [totalCount,setTotalCount]=useState(0);
   const [currentPage,setCurrentPage]=useState(1);
@@ -15,14 +15,14 @@ export default function PaymentTable({ searchQuery="", pipelineId="", methodFilt
   const pageSize=20;
   const listRef=useRef(null);
 
-  const fetchData=useCallback(async(page=1, search="", pipeline="", method="", user="")=>{
+  const fetchData=useCallback(async(page=1, search="", pipelines=[], methods=[], users=[])=>{
     setIsLoading(true);
     try{
       const params={page, page_size:pageSize};
       if(search) params.search=search;
-      if(pipeline) params.pipeline=pipeline;
-      if(method) params.payment_method=method;
-      if(user) params.recorded_by=user;
+      if(pipelines.length) params.pipeline=pipelines.join(",");
+      if(methods.length) params.payment_method=methods.join(",");
+      if(users.length) params.recorded_by=users.join(",");
       const res=await axios.get('/api/payments/', {params});
       setRows(res.data.results||res.data||[]);
       setTotalCount(res.data.count ?? (res.data.results?.length||0));
@@ -30,13 +30,13 @@ export default function PaymentTable({ searchQuery="", pipelineId="", methodFilt
   },[]);
 
   useEffect(()=>{
-    const t=setTimeout(()=>{ setCurrentPage(1); fetchData(1, searchQuery, pipelineId, methodFilter, userFilter); }, 400);
+    const t=setTimeout(()=>{ setCurrentPage(1); fetchData(1, searchQuery, pipelineIds, methodFilter, userFilter); }, 400);
     return ()=>clearTimeout(t);
-  },[searchQuery, pipelineId, methodFilter, userFilter, fetchData]);
+  },[searchQuery, pipelineIds, methodFilter, userFilter, fetchData]);
 
   const handlePageChange=(newPage)=>{
     setCurrentPage(newPage);
-    fetchData(newPage, searchQuery, pipelineId, methodFilter, userFilter);
+    fetchData(newPage, searchQuery, pipelineIds, methodFilter, userFilter);
     listRef.current?.scrollTo({top:0, behavior:'smooth'});
   };
   const totalPages=Math.ceil(totalCount/pageSize);

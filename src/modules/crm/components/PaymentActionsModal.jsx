@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, CreditCard, Repeat, Wallet, Clock, Loader2, ChevronDown } from "lucide-react";
+import { X, CreditCard, Repeat, Wallet, Clock, Loader2, ChevronDown, Pencil } from "lucide-react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
-export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
+export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedule }) {
   const [isRecurring, setIsRecurring] = useState(false);
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
@@ -19,29 +19,73 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [methodOpen, setMethodOpen] = useState(false);
+  const [viewMode, setViewMode] = useState(true);
+
+  const activeRuleId = React.useRef(null);
+
+  const applyRule = (rule) => {
+    if (!rule) return;
+    setAmount(String(rule.amount ?? ""));
+    setTitle(rule.payment_for ?? "");
+    setMethod(rule.payment_method ?? "UPI");
+    setCycleDays(rule.cycle_period_days ?? 30);
+    setCycleCount(rule.cycle_count ?? 3);
+    setStartDate(rule.start_date ?? new Date().toISOString().slice(0, 10));
+    setDueDate(rule.due_date || "");
+    setRemarks(rule.remarks?.replace(" [one-time pipeline rule]", "") ?? "");
+    setIsRecurring(String(rule.cycle_count) !== "1");
+    activeRuleId.current = rule.id || null;
+  };
+
+  const resetForm = () => {
+    setIsRecurring(false);
+    setAmount("");
+    setTitle("");
+    setMethod("UPI");
+    setRemarks("");
+    setCycleDays(30);
+    setCycleCount(3);
+    setStartDate(new Date().toISOString().slice(0, 10));
+    setDueDate("");
+    setError("");
+    setSuccess("");
+    setViewMode(true);
+    activeRuleId.current = null;
+  };
 
   useEffect(() => {
-    if (!isOpen) {
-      setAmount(""); setTitle(""); setRemarks(""); setCycleDays(30); setCycleCount(3);
-      setStartDate(new Date().toISOString().slice(0, 10)); setDueDate(""); setIsRecurring(false);
-      setError(""); setSuccess(""); setMethodOpen(false);
-    } else if (pipeline?.id) {
-      axios.get("/api/payments/schedules/", { params: { pipeline: pipeline.id } }).then((r) => {
+    if (!isOpen) return;
+    resetForm();
+    if (schedule?.id) {
+      applyRule(schedule);
+      return;
+    }
+    if (pipeline?.amount != null || pipeline?.payment_for != null) {
+      applyRule({ ...pipeline, id: pipeline?.scheduleId ?? pipeline?.schedule_id ?? null });
+      if (pipeline?.scheduleId ?? pipeline?.schedule_id) return;
+    }
+    const pid = pipeline?.id;
+    if (!pid) return;
+    let cancelled = false;
+    axios.get("/api/payments/schedules/", { params: { pipeline: pid } })
+      .then((r) => {
+        if (cancelled) return;
         const list = r.data.results || r.data || [];
         const rule = list.find((s) => s.status === "active") || list[0];
         if (rule) {
-          setAmount(String(rule.amount ?? ""));
-          setTitle(rule.payment_for ?? "");
-          setMethod(rule.payment_method ?? "UPI");
-          setCycleDays(rule.cycle_period_days ?? 30);
-          setCycleCount(rule.cycle_count ?? 3);
-          setStartDate(rule.start_date ?? new Date().toISOString().slice(0, 10));
-          setDueDate(rule.due_date || "");
-          setRemarks(rule.remarks?.replace(" [one-time pipeline rule]", "") ?? "");
-          setIsRecurring(String(rule.cycle_count) !== "1");
+          applyRule(rule);
+        } else {
+          // No existing rule — this is a fresh-create flow, so start in edit mode
+          setViewMode(false);
         }
-      }).catch(() => {});
-    }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          console.error("[PaymentActionsModal] Schedule fetch failed for pipeline", pid, e);
+          setViewMode(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, [isOpen, pipeline?.id]);
 
   useEffect(() => {
@@ -61,6 +105,12 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
     return [new Date(startDate).toISOString().slice(0, 10)];
   }, [isRecurring, startDate]);
 
+  const enterEdit = () => {
+    setError("");
+    setSuccess("");
+    setViewMode(false);
+  };
+
   if (!isOpen) return null;
 
   const submit = async (e) => {
@@ -76,22 +126,29 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
     }
     setLoading(true);
     try {
-      if (!isRecurring) {
-        await axios.post("/api/payments/schedules/", {
-          pipeline: pipeline.id, amount: parseFloat(amount), payment_for: title,
-          payment_method: method, cycle_period_days: 30, cycle_count: 1,
-          start_date: new Date().toISOString().slice(0, 10), due_date: dueDate || null, remarks: `${remarks} [one-time pipeline rule]`,
-        });
-        setSuccess("One-time pipeline rule saved.");
+      const payload = {
+        amount: parseFloat(amount),
+        payment_for: title,
+        payment_method: method,
+        cycle_period_days: isRecurring ? parseInt(cycleDays) : 30,
+        cycle_count: isRecurring ? parseInt(cycleCount) : 1,
+        start_date: new Date().toISOString().slice(0, 10),
+        due_date: dueDate || null,
+        remarks: isRecurring ? remarks : `${remarks} [one-time pipeline rule]`,
+      };
+      if (activeRuleId.current) {
+        await axios.patch(`/api/payments/schedules/${activeRuleId.current}/`, payload);
+        setSuccess(isRecurring
+          ? `Recurring rule updated: ₹${total.toLocaleString()} over ${cycleCount} cycles.`
+          : `One-time pipeline rule updated.`);
       } else {
-        await axios.post("/api/payments/schedules/", {
-          pipeline: pipeline.id, amount: parseFloat(amount), payment_for: title,
-          payment_method: method, cycle_period_days: parseInt(cycleDays),
-          cycle_count: parseInt(cycleCount), start_date: startDate, due_date: dueDate || null, remarks,
-        });
-        setSuccess(`Recurring rule: ₹${total.toLocaleString()} over ${cycleCount} cycles.`);
+        payload.pipeline = pipeline.id;
+        await axios.post("/api/payments/schedules/", payload);
+        setSuccess(isRecurring
+          ? `Recurring rule created: ₹${total.toLocaleString()} over ${cycleCount} cycles.`
+          : `One-time pipeline rule created.`);
       }
-      setTimeout(() => onClose(), 900);
+      setTimeout(() => { onClose(); }, 900);
     } catch (err) {
       const d = err?.response?.data;
       setError(d ? JSON.stringify(d).slice(0, 220) : "Failed to save.");
@@ -116,6 +173,60 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 space-y-6">
+          {viewMode ? (
+            /* ---------- VIEWABLE READ-ONLY SUMMARY ---------- */
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Pipeline</p>
+                  <p className="text-sm font-bold text-white truncate">{pipeline?.name || "Client"}</p>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Amount</p>
+                  <p className="text-sm font-bold text-emerald-400">₹{Number(amount || 0).toLocaleString("en-IN")}</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Payment Title</p>
+                <p className="text-sm font-medium text-white">{title || "—"}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Method</p>
+                  <p className="text-xs font-medium text-white uppercase tracking-widest">{method || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Type</p>
+                  <p className="text-xs font-medium text-white uppercase tracking-widest">{isRecurring ? `Recurring · every ${cycleDays} days × ${cycleCount}` : "One-time"}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Start Date</p>
+                  <p className="text-xs font-medium text-white">{startDate || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Due Date</p>
+                  <p className="text-xs font-medium text-white">{dueDate || "—"}</p>
+                </div>
+              </div>
+
+              {remarks && (
+                <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-4 space-y-1">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-white/30">Remarks</p>
+                  <p className="text-xs text-white/60 whitespace-pre-wrap">{remarks.replace(" [one-time pipeline rule]", "")}</p>
+                </div>
+              )}
+
+              {error && <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-md p-3 font-medium uppercase tracking-wider">{error}</p>}
+              {success && <p className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md p-3 font-medium uppercase tracking-wider">{success}</p>}
+            </div>
+          ) : (
+            /* ---------- EDIT FORM ---------- */
+          <>
           <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-zinc-900 rounded-lg">
             <div className="space-y-0.5">
               <p className="text-[10px] font-medium uppercase text-white">Recurring</p>
@@ -203,13 +314,24 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline }) {
 
           {error && <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-md p-3 font-medium uppercase tracking-wider">{error}</p>}
           {success && <p className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md p-3 font-medium uppercase tracking-wider">{success}</p>}
+          </>
+          )}
         </div>
 
         <div className="px-8 py-6 border-t border-zinc-800 bg-white/[0.01] flex items-center justify-end gap-3 shrink-0">
-          <button onClick={onClose} disabled={loading} className="px-6 py-2.5 bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-bold text-white/40 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50">Cancel</button>
-          <button onClick={submit} disabled={loading} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md flex items-center gap-2 disabled:opacity-50">
-            {loading && <Loader2 size={12} className="animate-spin" />}Save
-          </button>
+          {viewMode ? (
+            <>
+              <button onClick={enterEdit} disabled={loading} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50 flex items-center gap-2"><Pencil size={12} />Edit</button>
+              <button onClick={onClose} disabled={loading} className="px-6 py-2.5 bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-bold text-white/40 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50">Close</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setViewMode(true)} disabled={loading} className="px-6 py-2.5 bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-bold text-white/40 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50">Cancel</button>
+              <button onClick={submit} disabled={loading} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md flex items-center gap-2 disabled:opacity-50">
+                {loading && <Loader2 size={12} className="animate-spin" />}Save
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>,
