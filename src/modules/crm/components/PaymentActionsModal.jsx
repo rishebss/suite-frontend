@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, CreditCard, Repeat, Wallet, Clock, Loader2, ChevronDown, Pencil, Trash2, Plus } from "lucide-react";
-import { FaMoneyBillTransfer } from "react-icons/fa6";
 import axios from "axios";
+import moneyIcon from "@/assets/nururleymoney.svg";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -213,12 +213,10 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
           ) : mode === "empty" ? (
             /* ---------- EMPTY STATE — no payment action enabled ---------- */
             <div className="flex flex-col items-center justify-center text-center flex-1 w-full py-12">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
-                <FaMoneyBillTransfer size={28} />
-              </div>
+              <img src={moneyIcon} alt="No payment action" className="w-16 h-16 object-contain mb-4" />
               <h3 className="text-base font-medium text-white uppercase tracking-wider">No payment action enabled</h3>
               <p className="text-xs text-white/40 max-w-[300px] mt-2 leading-relaxed">This pipeline doesn't have any payment action yet. Create one to automate recurring or one-time payments.</p>
-              <button onClick={enterEdit} className="mt-6 flex items-center gap-2 px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer"><Plus size={14} />Create Payment Action</button>
+              <button onClick={enterEdit} className="mt-6 flex items-center gap-2 px-6 py-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer"><Plus size={14} />Create Payment Action</button>
             </div>
           ) : mode === "view" ? (
             /* ---------- VIEWABLE READ-ONLY SUMMARY ---------- */
