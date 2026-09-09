@@ -50,14 +50,15 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
           </div>
         )}
         <div className="px-8 bg-zinc-900/20 border-b border-zinc-800 shrink-0 select-none">
-          <div className="grid grid-cols-12 gap-4 text-xs font-medium text-white/30 items-center">
+          <div className="grid grid-cols-24 [&>*]:pr-3 text-xs font-medium text-white/30 items-center">
             <div className="col-span-1 py-3 pl-3">No</div>
-            <div className="col-span-2 py-3 pl-3">Payment Amount</div>
-            <div className="col-span-2 py-3 pl-3">Invoice</div>
-            <div className="col-span-2 py-3 pl-3">Pipeline</div>
-            <div className="col-span-2 py-3 pl-3">Method</div>
-            <div className="col-span-1 py-3 pl-3">Date</div>
-            <div className="col-span-2 text-right py-3 pl-3">Done by / Actor</div>
+            <div className="col-span-4 py-3 pl-3">Contact / Deal</div>
+            <div className="col-span-3 py-3 pl-3">Amount</div>
+            <div className="col-span-3 py-3 pl-3">Invoice</div>
+            <div className="col-span-4 py-3 pl-3">Pipeline</div>
+            <div className="col-span-3 py-3 pl-3">Method</div>
+            <div className="col-span-2 py-3 pl-3">Date</div>
+            <div className="col-span-4 text-right py-3 pl-3">Done by / Actor</div>
           </div>
         </div>
         {rows.length===0 && !isLoading ? (
@@ -68,17 +69,20 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
         ) : (
           <div ref={listRef} className="overflow-y-auto custom-scrollbar flex-1">
             {rows.map((r, idx)=>(
-              <div key={r.id} className="grid grid-cols-12 gap-4 px-8 group hover:bg-white/[0.02] transition-all divide-x divide-zinc-800 border-b border-zinc-800">
+              <div key={r.id} className="grid grid-cols-24 px-8 [&>*]:pr-3 group hover:bg-white/[0.02] transition-all divide-x divide-zinc-800 border-b border-zinc-800">
                 <div className="col-span-1 text-xs text-white/25 py-3.5 pl-3">{(currentPage-1)*pageSize+idx+1}</div>
-                <div className="col-span-2 flex items-center gap-2 py-3.5 pl-3">
-                  <div className="w-7 h-7 rounded-full border bg-white/5 border-white/10 text-white/40 group-hover:border-emerald-500/20 group-hover:bg-emerald-500/5 group-hover:text-emerald-400 flex items-center justify-center text-xs shrink-0"><FaRupeeSign size={9}/></div>
-                  <span className="text-sm font-bold text-emerald-400">{fmtINR(r.amount)}</span>
+                <div className="col-span-4 min-w-0 flex items-center py-3.5 pl-3 transition-colors hover:bg-blue-500/10 group/name">
+                  <p className="text-xs font-semibold text-white truncate transition-colors group-hover/name:text-blue-400" title={r.contact_details?.name||""}>{r.contact_details?.name||"—"}</p>
                 </div>
-                <div className="col-span-2 text-xs font-mono text-white/60 truncate py-3.5 pl-3">{r.invoice||"—"}</div>
-                <div className="col-span-2 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60 truncate inline-block max-w-full">{r.crm_details?.pipeline_name||r.pipeline_name||r.crm__pipeline__name||"—"}</span></div>
-                <div className="col-span-2 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60">{r.payment_method}</span></div>
-                <div className="col-span-1 text-xs text-white/40 py-3.5 pl-3">{r.created_at? new Date(r.created_at).toLocaleDateString():"—"}</div>
-                <div className="col-span-2 text-right min-w-0 py-3.5 pl-3">
+                <div className="col-span-3 flex items-center gap-2 py-3.5 pl-3">
+                  <div className="w-7 h-7 rounded-full border bg-white/5 border-white/10 text-white/40 group-hover:border-blue-500/20 group-hover:bg-blue-500/5 group-hover:text-blue-400 flex items-center justify-center text-xs shrink-0"><FaRupeeSign size={9}/></div>
+                  <span className="text-sm font-bold text-blue-400">{fmtINR(r.amount)}</span>
+                </div>
+                <div className="col-span-3 text-xs font-mono text-white/60 truncate py-3.5 pl-3">{r.invoice||"—"}</div>
+                <div className="col-span-4 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60 truncate inline-block max-w-full">{r.crm_details?.pipeline_name||r.pipeline_name||r.crm__pipeline__name||"—"}</span></div>
+                <div className="col-span-3 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60">{r.payment_method}</span></div>
+                <div className="col-span-2 text-xs text-white/40 py-3.5 pl-3">{r.created_at? new Date(r.created_at).toLocaleDateString():"—"}</div>
+                <div className="col-span-4 text-right min-w-0 py-3.5 pl-3">
                   <p className="text-xs font-medium text-white truncate">{r.recorded_by_details ? `${r.recorded_by_details.first_name||""} ${r.recorded_by_details.last_name||""}`.trim() || r.recorded_by_details.email : "—"}</p>
                   <p className="text-[11px] text-white/30 truncate">{r.recorded_by_details?.email||""}</p>
                 </div>
