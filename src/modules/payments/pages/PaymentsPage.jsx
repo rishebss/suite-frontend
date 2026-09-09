@@ -94,11 +94,11 @@ export default function PaymentsPage(){
       </header>
       <main className="flex-1 px-10 pt-5 pb-10 relative z-10 overflow-hidden flex flex-col gap-4 min-h-0">
         <div className="flex items-center justify-between gap-4 shrink-0 pb-4">
-          <div className="relative flex items-center p-1 bg-white/[0.02] border border-white/20 rounded-md w-[360px]">
+          <div className="relative flex items-center p-1 bg-white/[0.02] border border-white/20 rounded-md">
             <div className={cn("absolute inset-y-0 bg-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all duration-300 ease-out z-0", tab==="logs" ? "left-0 w-1/2 rounded-l rounded-r-none" : "left-1/2 w-1/2 rounded-r rounded-l-none")} />
             {[{id:"logs",label:"Logs"},{id:"schedules",label:"Rules"}].map(t=>{
               const active=tab===t.id;
-              return <button key={t.id} onClick={()=>setTab(t.id)} className={cn("relative z-10 flex-1 flex items-center justify-center py-1.5 rounded text-[10px] font-medium uppercase tracking-[0.2em] transition-all duration-300", active?"text-blue-400":"text-white/50 hover:text-white/80")}>{t.label}</button>
+              return <button key={t.id} onClick={()=>setTab(t.id)} className={cn("relative z-10 px-6 py-1.5 rounded text-[10px] font-medium uppercase tracking-[0.2em] transition-all duration-300", active?"text-blue-400":"text-white/50 hover:text-white/80")}>{t.label}</button>
             })}
           </div>
           <div className="flex items-center gap-2">
