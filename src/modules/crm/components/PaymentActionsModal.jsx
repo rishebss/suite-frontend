@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, CreditCard, Repeat, Wallet, Clock, Loader2, ChevronDown, Pencil } from "lucide-react";
+import { X, CreditCard, Repeat, Wallet, Clock, Loader2, ChevronDown, Pencil, Trash2, Plus } from "lucide-react";
+import { FaMoneyBillTransfer } from "react-icons/fa6";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,9 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [methodOpen, setMethodOpen] = useState(false);
-  const [viewMode, setViewMode] = useState(true);
+  const [mode, setMode] = useState("loading"); // "loading" | "view" | "edit" | "empty"
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const activeRuleId = React.useRef(null);
 
@@ -49,7 +52,8 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
     setDueDate("");
     setError("");
     setSuccess("");
-    setViewMode(true);
+    setMode("loading");
+    setConfirmDeleteOpen(false);
     activeRuleId.current = null;
   };
 
@@ -74,15 +78,16 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
         const rule = list.find((s) => s.status === "active") || list[0];
         if (rule) {
           applyRule(rule);
+          setMode("view");
         } else {
-          // No existing rule — this is a fresh-create flow, so start in edit mode
-          setViewMode(false);
+          // No payment action exists — show the dedicated empty state
+          setMode("empty");
         }
       })
       .catch((e) => {
         if (!cancelled) {
           console.error("[PaymentActionsModal] Schedule fetch failed for pipeline", pid, e);
-          setViewMode(false);
+          setMode("empty");
         }
       });
     return () => { cancelled = true; };
@@ -108,7 +113,26 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
   const enterEdit = () => {
     setError("");
     setSuccess("");
-    setViewMode(false);
+    setMode("edit");
+  };
+
+  const handleDelete = async () => {
+    if (!activeRuleId.current) return;
+    setError("");
+    setSuccess("");
+    setDeleting(true);
+    try {
+      await axios.delete(`/api/payments/schedules/${activeRuleId.current}/`);
+      // Payment action for this pipeline is now null → switch to empty state
+      resetForm();
+      setMode("empty");
+      setConfirmDeleteOpen(false);
+      setSuccess("Payment action deleted. You can create a new one.");
+    } catch (err) {
+      const d = err?.response?.data;
+      setError(d ? JSON.stringify(d).slice(0, 220) : "Failed to delete.");
+      setConfirmDeleteOpen(false);
+    } finally { setDeleting(false); }
   };
 
   if (!isOpen) return null;
@@ -159,21 +183,44 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={!loading ? onClose : undefined} />
       <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+        {/* Standalone close button for empty state (no header/footer) */}
+        {mode === "empty" && (
+          <button onClick={onClose} disabled={loading} className="absolute top-4 right-4 z-20 p-2 text-white/20 hover:text-white rounded-lg border border-white/10 hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"><X size={16} /></button>
+        )}
+
+        {(mode === "view" || mode === "edit") && (
         <div className="px-8 py-6 border-b border-zinc-800 bg-white/[0.02] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <CreditCard size={20} />
             </div>
             <div>
-              <h2 className="text-base font-medium text-white uppercase tracking-wider">Payment Actions</h2>
+              <h2 className="text-base font-medium text-white uppercase tracking-wider">{activeRuleId.current ? "Payment Actions" : "Create Payment Action"}</h2>
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">Pipeline: <span className="text-blue-400 font-semibold">{pipeline?.name || "Client"}</span></p>
             </div>
           </div>
           <button onClick={onClose} disabled={loading} className="p-2 text-white/20 hover:text-white rounded-lg hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"><X size={16} /></button>
         </div>
+        )}
 
-        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 space-y-6">
-          {viewMode ? (
+        <div className={cn("flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 space-y-6 transition-all duration-200", mode === "loading" && "flex flex-col items-center justify-center", mode === "empty" && "flex flex-col items-center justify-center", confirmDeleteOpen && "blur-sm opacity-40 pointer-events-none select-none")}>
+          {mode === "loading" ? (
+            /* ---------- LOADING STATE ---------- */
+            <div className="flex flex-col items-center justify-center text-center flex-1 w-full py-12">
+              <Loader2 size={28} className="animate-spin text-blue-400" />
+              <p className="text-xs text-white/40 uppercase tracking-widest mt-3">Checking payment action…</p>
+            </div>
+          ) : mode === "empty" ? (
+            /* ---------- EMPTY STATE — no payment action enabled ---------- */
+            <div className="flex flex-col items-center justify-center text-center flex-1 w-full py-12">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
+                <FaMoneyBillTransfer size={28} />
+              </div>
+              <h3 className="text-base font-medium text-white uppercase tracking-wider">No payment action enabled</h3>
+              <p className="text-xs text-white/40 max-w-[300px] mt-2 leading-relaxed">This pipeline doesn't have any payment action yet. Create one to automate recurring or one-time payments.</p>
+              <button onClick={enterEdit} className="mt-6 flex items-center gap-2 px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer"><Plus size={14} />Create Payment Action</button>
+            </div>
+          ) : mode === "view" ? (
             /* ---------- VIEWABLE READ-ONLY SUMMARY ---------- */
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-3">
@@ -318,21 +365,44 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
           )}
         </div>
 
+        {/* Confirm delete banner — emerges from top of footer */}
+        {confirmDeleteOpen && (
+          <div className="px-8 py-4 border-t border-red-500/30 bg-red-500/10 animate-in slide-in-from-bottom-2 fade-in duration-200 shrink-0 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 shrink-0">
+                <Trash2 size={14} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white">Remove payment rule?</p>
+                <p className="text-[10px] text-red-300/70">Removing the payment rule for this pipeline cannot be undone.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => setConfirmDeleteOpen(false)} disabled={deleting} className="px-3 py-1.5 rounded-md bg-zinc-900/60 border border-red-500/20 text-[10px] font-bold uppercase tracking-widest text-white/50 hover:text-white transition-all cursor-pointer disabled:opacity-50">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting} className="px-4 py-1.5 rounded-md bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/50 text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
+                {deleting && <Loader2 size={11} className="animate-spin" />}{deleting ? "Deleting…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mode === "view" || mode === "edit" ? (
         <div className="px-8 py-6 border-t border-zinc-800 bg-white/[0.01] flex items-center justify-end gap-3 shrink-0">
-          {viewMode ? (
+          {mode === "view" ? (
             <>
-              <button onClick={enterEdit} disabled={loading} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50 flex items-center gap-2"><Pencil size={12} />Edit</button>
-              <button onClick={onClose} disabled={loading} className="px-6 py-2.5 bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-bold text-white/40 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50">Close</button>
+              <button onClick={() => setConfirmDeleteOpen(true)} disabled={loading || deleting || confirmDeleteOpen} className="px-6 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2">{(confirmDeleteOpen || deleting) ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}{deleting ? "Deleting…" : "Delete"}</button>
+              <button onClick={enterEdit} disabled={loading || deleting || confirmDeleteOpen} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"><Pencil size={12} />Edit</button>
             </>
           ) : (
             <>
-              <button onClick={() => setViewMode(true)} disabled={loading} className="px-6 py-2.5 bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-bold text-white/40 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50">Cancel</button>
+              <button onClick={() => setMode(activeRuleId.current ? "view" : "empty")} disabled={loading} className="px-6 py-2.5 bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-bold text-white/40 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 uppercase tracking-widest transition-all rounded-md cursor-pointer disabled:opacity-50">Cancel</button>
               <button onClick={submit} disabled={loading} className="px-6 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md flex items-center gap-2 disabled:opacity-50">
                 {loading && <Loader2 size={12} className="animate-spin" />}Save
               </button>
             </>
           )}
         </div>
+        ) : null}
       </div>
     </div>,
     document.body
