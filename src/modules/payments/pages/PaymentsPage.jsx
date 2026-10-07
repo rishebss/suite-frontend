@@ -5,6 +5,9 @@ import { fetchPayments, fetchSchedules, fetchPipelines, fetchAssignableUsers } f
 import PaymentTable from "../components/PaymentTable";
 import ScheduleTable from "../components/ScheduleTable";
 import PaymentSearchModal from "../components/PaymentSearchModal";
+import ContactPaymentDetailDrawer from "../components/ContactPaymentDetailDrawer";
+import PipelinePaymentDetailDrawer from "../components/PipelinePaymentDetailDrawer";
+import PaymentFieldDetailDrawer from "../components/PaymentFieldDetailDrawer";
 
 const fmtINR=v=>`₹${Number(v||0).toLocaleString("en-IN")}`;
 export default function PaymentsPage(){
@@ -14,7 +17,7 @@ export default function PaymentsPage(){
   const [pipelines,setPipelines]=useState([]);
   const [loading,setLoading]=useState(true);
   const [schedulesLoading,setSchedulesLoading]=useState(false);
-  const [filters,setFilters]=useState({search:"",pipeline:[],method:[],user:[]});
+  const [filters,setFilters]=useState({pipeline:[],method:[],user:[]});
   const [draft,setDraft]=useState(null);
   const [filterOpen,setFilterOpen]=useState(false);
   const [pipeSubOpen,setPipeSubOpen]=useState(false);
@@ -34,6 +37,22 @@ export default function PaymentsPage(){
     if(userSubOpen && users.length===0) loadUsers();
   },[userSubOpen]);
   const [searchModalOpen,setSearchModalOpen]=useState(false);
+  const [drawer,setDrawer]=useState(null);
+  const openDrawerFromResult=(field,row)=>{
+    setSearchModalOpen(false);
+    if(field==="contact"){
+      const id=row.contact||row.contact_details?.id;
+      if(id) return setDrawer({kind:"contact",id});
+      return;
+    }
+    if(field==="pipeline"){
+      const id=row.crm_details?.pipeline||row.crm;
+      if(id) return setDrawer({kind:"pipeline",id});
+      return setDrawer({kind:"field",field:"payment_for",value:row.payment_for});
+    }
+    const value=field==="invoice"?row.invoice:field==="method"?row.payment_method:row.payment_for;
+    if(value) setDrawer({kind:"field",field,value});
+  };
   const [pipelinesLoading,setPipelinesLoading]=useState(false);
   const [pipelinePage,setPipelinePage]=useState(1);
   const [pipelineHasMore,setPipelineHasMore]=useState(false);
@@ -204,10 +223,13 @@ export default function PaymentsPage(){
             </div>
           </div>
         </div>
-        {tab==="logs" && <PaymentTable searchQuery={filters.search} pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} />}
+        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} />}
         {tab==="schedules" && <ScheduleTable rows={schedules} loading={schedulesLoading}/>}
       </main>
-      <PaymentSearchModal isOpen={searchModalOpen} onClose={()=>setSearchModalOpen(false)} search={filters.search} setSearch={v=>setFilters({...filters, search:v})} />
+      <PaymentSearchModal isOpen={searchModalOpen} onClose={()=>setSearchModalOpen(false)} onSelectResult={openDrawerFromResult} />
+      <ContactPaymentDetailDrawer key={`contact-${drawer?.kind==="contact"?drawer.id:"none"}`} open={drawer?.kind==="contact"} onClose={()=>setDrawer(null)} contactId={drawer?.id} />
+      <PipelinePaymentDetailDrawer key={`pipeline-${drawer?.kind==="pipeline"?drawer.id:"none"}`} open={drawer?.kind==="pipeline"} onClose={()=>setDrawer(null)} pipelineId={drawer?.id} />
+      <PaymentFieldDetailDrawer key={`field-${drawer?.kind==="field"?`${drawer.field}-${drawer.value}`:"none"}`} open={drawer?.kind==="field"} onClose={()=>setDrawer(null)} field={drawer?.field} value={drawer?.value} />
     </div>
   );
 }

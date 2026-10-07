@@ -5,3 +5,7 @@ export const fetchPipelines = (params={}) => axios.get("/api/crm/pipelines/", { 
 export const fetchDashboard = () => axios.get("/api/dashboard/overview/");
 export const fetchAssignableUsers = (params = {}) =>
   axios.get("/api/auth/users/assignable/", { params });
+// Detail-drawer data sources
+export const fetchContact = (id) => axios.get(`/api/contacts/${id}/`);
+export const fetchPipeline = (id) => axios.get(`/api/crm/pipelines/${id}/`);
+export const fetchDeals = (params = {}) => axios.get("/api/crm/pipeline/", { params });

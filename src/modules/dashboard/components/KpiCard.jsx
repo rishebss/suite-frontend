@@ -34,6 +34,8 @@ const KpiCard = ({
   icon,
   suffix,
   accent = "blue",
+  delta,
+  deltaLabel = "vs prev 30d",
 }) => {
   const a = accents[accent] || accents.blue;
   return (
@@ -61,6 +63,27 @@ const KpiCard = ({
         <p className="truncate text-2xl font-semibold tracking-tight text-white">
           {value}
         </p>
+        {delta !== undefined && delta !== null && (
+          <p
+            className={cn(
+              "text-[10px] font-bold tracking-tight",
+              delta > 0
+                ? "text-emerald-400"
+                : delta < 0
+                  ? "text-rose-400"
+                  : "text-white/40",
+            )}
+          >
+            {delta > 0 ? "▲" : delta < 0 ? "▼" : "—"} {Math.abs(delta)}%{" "}
+            <span className="font-medium text-white/30">· {deltaLabel}</span>
+          </p>
+        )}
+        {delta === null && (
+          <p className="text-[10px] font-bold text-white/40">
+            NEW{" "}
+            <span className="font-medium text-white/30">· {deltaLabel}</span>
+          </p>
+        )}
       </div>
     </div>
   );

@@ -9,7 +9,8 @@ import { Donut, Legend, Stat, ProgressBar } from "../components/charts";
 import { useOwnerDashboard } from "../hooks/useOwnerDashboard";
 import {
   Users, Briefcase, Layers, Wallet, CalendarDays, AlertTriangle,
-  TrendingUp, Phone, CreditCard, UserCheck, Clock, ArrowUpRight, ImageIcon,
+  TrendingUp, TrendingDown, Phone, CreditCard, UserCheck, UserPlus, Clock,
+  ArrowUpRight, ImageIcon, Target,
 } from "lucide-react";
 
 const fmtINR = (v) => {
@@ -38,14 +39,19 @@ export default function Dashboard(){
   const users=data?.users||{};
   const recent=data?.recent_activity||[];
 
-  const stageSegments=(crm.by_stage||[]).map((s,i)=>({label:s.stage__name||"—",value:s.count,color:COLORS[i%COLORS.length]}));
+  const trends=data?.trends||{};
+  const funnelStages=[...(crm.by_stage||[])].sort((a,b)=>(a.stage_order??0)-(b.stage_order??0)).map((s,i)=>({key:`${i}-${s.stage__name||"none"}`,name:s.stage__name||"—",count:s.count||0,value:Number(s.value||0),color:COLORS[i%COLORS.length]}));
+  const wonCount=(crm.by_stage||[]).filter(s=>["won","closed_won"].includes(s.stage__slug)).reduce((a,s)=>a+(s.count||0),0);
+  const lostCount=(crm.by_stage||[]).filter(s=>["lost","closed_lost"].includes(s.stage__slug)).reduce((a,s)=>a+(s.count||0),0);
+  const wonV=Number(crm.won_value||0),lostV=Number(crm.lost_value||0);
+  const winRate=wonV+lostV>0?Math.round(wonV/(wonV+lostV)*100):null;
   const pipelineBars=(crm.by_pipeline||[]).map(p=>({label:(p.pipeline__name||"—").slice(0,12),value:Number(p.value||0)}));
   const contactSegments=(contacts.by_status||[]).map((s,i)=>({label:s.status,value:s.count,color:COLORS[i%COLORS.length]}));
   const payBars=(payments.by_month||[]).map(m=>({label:m.label.slice(0,3),value:m.value}));
   const payPipelineBars=(payments.by_pipeline||[]).map(p=>({label:(p.crm__pipeline__name||"—").slice(0,10),value:Number(p.total||0)}));
   const payStatusSegments=(crmPay.by_payment_status||[]).filter(s=>["Paid","Due","Payment Pending","Lead"].includes(s.contact__status)).map((s,i)=>({label:s.contact__status==="Payment Pending"?"Pending":s.contact__status,value:s.count,color:s.contact__status==="Paid"?"#10b981":s.contact__status==="Due"?"#ef4444":s.contact__status==="Payment Pending"?"#a855f7":"#3b82f6"}));
 
-  if(loading) return <div className="p-10 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">{Array.from({length:6}).map((_,i)=><div key={i} className="h-32 rounded-2xl border border-white/5 bg-white/[0.02] animate-pulse"/> )}</div>;
+  if(loading) return <div className="p-10 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">{Array.from({length:12}).map((_,i)=><div key={i} className="h-32 rounded-2xl border border-white/5 bg-white/[0.02] animate-pulse"/> )}</div>;
   if(error) return <div className="p-10"><div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-sm text-red-300"><p className="font-bold">Couldn't load dashboard</p><p className="mt-1 opacity-80">{error}</p><button onClick={refetch} className="mt-4 rounded bg-red-500 px-4 py-1.5 text-xs font-bold text-white">Retry</button></div></div>;
 
   return (
@@ -57,9 +63,6 @@ export default function Dashboard(){
             <p className="text-sm text-white/40 font-medium">Welcome, {user?.first_name||user?.email} — {org} overview across contacts, pipelines & calendar.</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-white/25">Synced {lastUpdated?lastUpdated.toLocaleTimeString(): "—"}</span>
-            <button onClick={refetch} className="h-8 px-3 rounded border border-white/10 bg-white/5 text-xs font-bold text-white/70 hover:bg-white/10">Refresh</button>
-            <button onClick={()=>nav("/crm")} className="h-8 px-4 rounded bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white flex items-center gap-1">Open CRM <ArrowUpRight size={12}/></button>
           </div>
         </div>
       </header>
@@ -71,11 +74,45 @@ export default function Dashboard(){
           <KpiCard label="Pending" value={fmtNum(crmPay.pending)} icon={Clock} accent="violet" suffix={`${fmtNum(crmPay.due)} due`} />
           <KpiCard label="Paid Deals" value={fmtNum(crmPay.paid)} icon={Wallet} accent="emerald" suffix={`${fmtNum(crmPay.unpaid||0)} unpaid`} />
           <KpiCard label="Collection Rate" value={`${payments.collection_rate||0}%`} icon={TrendingUp} accent="cyan" suffix={fmtINR(payments.outstanding||0)+" outstanding"} />
-          <KpiCard label="Revenue Collected" value={fmtINR(payments.revenue_total)} icon={CreditCard} accent="amber" suffix={fmtINR(payments.revenue_30)+" 30d"} />
+          <KpiCard label="Revenue Collected" value={fmtINR(payments.revenue_total)} icon={CreditCard} accent="amber" suffix={fmtINR(payments.revenue_30)+" 30d"} delta={trends.revenue_30?.delta_pct} />
           <KpiCard label="Expected Revenue" value={fmtINR(payments.expected_total)} icon={Briefcase} accent="rose" suffix={`${fmtNum(payments.by_pipeline?.length||0)} pipelines`} />
         </section>
 
-        {/* Row 1: Funnel + Revenue + Contacts — now payment-aware */}
+        {/* KPI Row 2 — growth & win/loss intelligence */}
+        <section className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+          <KpiCard label="New Contacts" value={fmtNum(contacts.new_30)} icon={UserPlus} accent="blue" suffix="30d" delta={trends.contacts_30?.delta_pct} />
+          <KpiCard label="New Deals" value={fmtNum(trends.deals_30?.current||0)} icon={Layers} accent="violet" suffix="30d" delta={trends.deals_30?.delta_pct} />
+          <KpiCard label="Won Revenue" value={fmtINR(crm.won_value)} icon={ArrowUpRight} accent="emerald" suffix={`${wonCount} won`} />
+          <KpiCard label="Win Rate" value={`${winRate??0}%`} icon={Target} accent="cyan" suffix={`${wonCount}W · ${lostCount}L`} />
+          <KpiCard label="Lost Revenue" value={fmtINR(crm.lost_value)} icon={TrendingDown} accent="rose" suffix={`${lostCount} lost`} />
+          <KpiCard label="Open Deals" value={fmtNum(crm.open)} icon={AlertTriangle} accent="amber" suffix={`${fmtNum(crm.deals)} total`} />
+        </section>
+
+        {/* Deal Funnel — stage distribution (previously dead API data) */}
+        {funnelStages.length>0 && (
+        <section>
+          <ModuleCard title="Deal Funnel" subtitle={`${fmtNum(funnelStages.reduce((a,s)=>a+s.count,0))} deals by stage · across pipelines`} icon={Layers}>
+            <div className="flex items-stretch gap-2 overflow-x-auto pb-1">
+              {funnelStages.map(s=>(
+                <div
+                  key={s.key}
+                  className="relative flex min-h-[92px] min-w-[110px] flex-col justify-between rounded-xl border px-4 py-3"
+                  style={{flex:`${Math.max(s.count,0.1)} 1 0%`,borderColor:`${s.color}55`,background:`linear-gradient(160deg, ${s.color}26, ${s.color}0a)`,boxShadow:`inset 0 1px 0 ${s.color}33`}}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{backgroundColor:s.color}} />
+                    <p className="truncate text-[10px] font-bold uppercase tracking-wider text-white/70">{s.name}</p>
+                  </div>
+                  <p className="text-2xl font-bold tracking-tight text-white">{fmtNum(s.count)}</p>
+                  <p className="truncate text-[10px] font-medium text-white/40">{fmtINR(s.value)}</p>
+                </div>
+              ))}
+            </div>
+          </ModuleCard>
+        </section>
+        )}
+
+        {/* Row 1: Collection health + Revenue + Contacts — now payment-aware */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <ModuleCard title="Collection Health" subtitle={`${crmPay.paid||0} paid · ${crmPay.pending||0} pending · ${crmPay.due||0} due`} icon={Wallet} action={<button onClick={()=>nav("/crm")} className="text-[11px] font-bold text-emerald-400 hover:underline">Collect →</button>}>
             {payStatusSegments.length?(
@@ -97,9 +134,16 @@ export default function Dashboard(){
               <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1">By Pipeline</p>
               {payPipelineBars.length? <MiniBarChart data={payPipelineBars} color="#6366f1" format={fmtINR} /> : <p className="text-xs text-white/30">No pipeline revenue</p>}
             </div>
-            <div className="mt-3 flex gap-2 border-t border-white/5 pt-3">
+            <div className="mt-3 flex gap-4 border-t border-white/5 pt-3">
               <Stat label="Total" value={fmtINR(payments.revenue_total)} color="text-amber-400" />
-              <Stat label="Methods" value={fmtNum((payments.by_method||[]).length)} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Top Method</p>
+                <p className="truncate text-lg font-bold tracking-tight text-white">{payments.by_method?.[0]?.payment_method||"—"}</p>
+                <p className="truncate text-[10px] font-medium text-white/35">
+                  {fmtINR(payments.by_method?.[0]?.total||0)}
+                  {(payments.by_method||[]).length>1 && ` · ${payments.by_method.slice(1,3).map(m=>`${m.payment_method||"Other"} ${fmtINR(m.total)}`).join(" · ")}`}
+                </p>
+              </div>
             </div>
           </ModuleCard>
 
@@ -143,7 +187,7 @@ export default function Dashboard(){
             <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/5 pt-3">
               <Stat label="Assigned" value={fmtNum(crm.assigned)} color="text-emerald-400"/>
               <Stat label="Unassigned" value={fmtNum(crm.unassigned)} color="text-amber-400"/>
-              <Stat label="Priorities" value={(crm.by_priority||[]).map(p=>p.priority).join(", ")||"—"} />
+              <Stat label="Priorities" value={(crm.by_priority||[]).map(p=>`${p.priority||"—"} ${p.count||0}`).join(" · ")||"—"} />
             </div>
           </ModuleCard>
 
@@ -206,8 +250,8 @@ export default function Dashboard(){
             <div className="mt-4 space-y-2">
               <div className="flex justify-between text-xs"><span className="text-white/50">Assigned deals</span><span className="font-bold text-white">{crm.assigned||0}/{crm.deals||0}</span></div>
               <ProgressBar value={crm.assigned||0} max={crm.deals||1} color="#10b981" />
-              <div className="flex justify-between text-xs"><span className="text-white/50">Contacts → Deals</span><span className="font-bold text-white">{contacts.total? Math.round((crm.deals/contacts.total)*100):0}%</span></div>
-              <ProgressBar value={crm.deals||0} max={contacts.total||1} color="#6366f1" />
+              <div className="flex justify-between text-xs"><span className="text-white/50">Contacts → Deals</span><span className="font-bold text-white">{crmPay.conversion_rate||0}%</span></div>
+              <ProgressBar value={Number(crmPay.conversion_rate||0)} max={100} color="#6366f1" />
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button onClick={()=>nav("/contacts")} className="h-8 rounded bg-white text-xs font-bold text-zinc-900">Contacts</button>

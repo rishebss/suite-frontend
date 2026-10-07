@@ -1,17 +1,15 @@
 /**
  * Icon Mapper Utility
- * Maps Lucide icon names (strings) to actual React icon components
- * Used for dynamic menu rendering where icon names come from the API
+ * Maps icon name strings (from the menu API) to actual React icon components
+ * Used for dynamic sidebar menu rendering.
+ * Main navigation icons come from react-icons; everything else falls back to Lucide.
  */
 
 import {
-  LayoutDashboard,
   Users,
   FileText,
   Box,
-  Briefcase,
   CreditCard,
-  Image as ImageIcon,
   GraduationCap,
   TrendingUp,
   ShieldCheck,
@@ -19,10 +17,8 @@ import {
   LogOut,
   ChevronRight,
   Home,
-  Briefcase as BriefcaseIcon,
   BarChart3,
   PieChart,
-  Calendar,
   Clock,
   AlertCircle,
   CheckCircle,
@@ -53,18 +49,25 @@ import {
   AlertTriangle,
   Target,
   Crosshair,
-  Contact,
   Kanban,
 } from "lucide-react";
 
+// Sidebar menu icons (react-icons) — required set for main navigation
+import { BiSolidDashboard } from "react-icons/bi";
+import { BsFillPersonVcardFill } from "react-icons/bs";
+import { PiChartDonutFill } from "react-icons/pi";
+import { IoCalendarSharp } from "react-icons/io5";
+import { FaMoneyBillTransfer } from "react-icons/fa6";
+import { MdPermMedia } from "react-icons/md";
+
 /**
  * Comprehensive icon map
- * Maps icon name strings to Lucide components
+ * Maps icon name strings to React icon components
  */
 const ICON_MAP = {
   // Dashboard & Navigation
-  LayoutDashboard,
-  Dashboard: LayoutDashboard,
+  LayoutDashboard: BiSolidDashboard,
+  Dashboard: BiSolidDashboard,
   Home,
   Menu,
   Settings,
@@ -75,8 +78,8 @@ const ICON_MAP = {
   // Business Icons
   Users,
   People: Users,
-  Briefcase,
-  BriefcaseIcon,
+  Briefcase: PiChartDonutFill,
+  BriefcaseIcon: PiChartDonutFill,
   BarChart3,
   TrendingUp,
   PieChart,
@@ -84,8 +87,8 @@ const ICON_MAP = {
   // Content & Documents
   FileText,
   Box,
-  Image: ImageIcon,
-  ImageIcon,
+  Image: MdPermMedia,
+  ImageIcon: MdPermMedia,
 
   // Organization
   GraduationCap,
@@ -100,7 +103,7 @@ const ICON_MAP = {
   DollarSign: CreditCard,
 
   // Date & Time
-  Calendar,
+  Calendar: IoCalendarSharp,
   Clock,
 
   // Status & Alerts
@@ -130,7 +133,10 @@ const ICON_MAP = {
   // Contact
   Mail,
   Phone,
-  Contact,
+  Contact: BsFillPersonVcardFill,
+
+  // Payments
+  Wallet: FaMoneyBillTransfer,
 
   // Navigation
   ChevronRight,

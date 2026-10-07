@@ -7,7 +7,7 @@ import RingLoader from '@/components/ui/RingLoader';
 
 const fmtINR=v=>`₹${Number(v||0).toLocaleString("en-IN")}`;
 
-export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[] }){
+export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[], onContactClick, onInvoiceClick, onPipelineClick }){
   const [rows,setRows]=useState([]);
   const [totalCount,setTotalCount]=useState(0);
   const [currentPage,setCurrentPage]=useState(1);
@@ -71,15 +71,31 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
             {rows.map((r, idx)=>(
               <div key={r.id} className="grid grid-cols-24 px-8 [&>*]:pr-3 group hover:bg-white/[0.02] transition-all divide-x divide-zinc-800 border-b border-zinc-800">
                 <div className="col-span-1 text-xs text-white/25 py-3.5 pl-3">{(currentPage-1)*pageSize+idx+1}</div>
-                <div className="col-span-4 min-w-0 flex items-center py-3.5 pl-3 transition-colors hover:bg-blue-500/10 group/name">
+                <div
+                  onClick={()=>onContactClick?.(r.contact||r.contact_details?.id)}
+                  className="col-span-4 min-w-0 flex items-center py-3.5 pl-3 transition-colors hover:bg-blue-500/10 group/name cursor-pointer"
+                  title="View contact payments"
+                >
                   <p className="text-xs font-semibold text-white truncate transition-colors group-hover/name:text-blue-400" title={r.contact_details?.name||""}>{r.contact_details?.name||"—"}</p>
                 </div>
                 <div className="col-span-3 flex items-center gap-2 py-3.5 pl-3">
                   <div className="w-7 h-7 rounded-full border bg-white/5 border-white/10 text-white/40 group-hover:border-blue-500/20 group-hover:bg-blue-500/5 group-hover:text-blue-400 flex items-center justify-center text-xs shrink-0"><FaRupeeSign size={9}/></div>
                   <span className="text-sm font-bold text-blue-400">{fmtINR(r.amount)}</span>
                 </div>
-                <div className="col-span-3 text-xs font-mono text-white/60 truncate py-3.5 pl-3">{r.invoice||"—"}</div>
-                <div className="col-span-4 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60 truncate inline-block max-w-full">{r.crm_details?.pipeline_name||r.pipeline_name||r.crm__pipeline__name||"—"}</span></div>
+                <div
+                  onClick={()=>{ if(r.invoice) onInvoiceClick?.(r.invoice); }}
+                  className={cn("col-span-3 min-w-0 flex items-center py-3.5 pl-3 transition-colors", r.invoice && "hover:bg-blue-500/10 group/invoice cursor-pointer")}
+                  title={r.invoice ? "View invoice payments" : undefined}
+                >
+                  <p className={cn("text-xs font-mono text-white/60 truncate transition-colors", r.invoice && "group-hover/invoice:text-blue-400")}>{r.invoice||"—"}</p>
+                </div>
+                <div
+                  onClick={()=>{ const id=r.crm_details?.pipeline; if(id) onPipelineClick?.(id); }}
+                  className={cn("col-span-4 min-w-0 py-3.5 pl-3 transition-colors", r.crm_details?.pipeline && "hover:bg-blue-500/10 group/pipe cursor-pointer")}
+                  title={r.crm_details?.pipeline ? "View pipeline payments" : undefined}
+                >
+                  <span className={cn("px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60 truncate inline-block max-w-full transition-colors", r.crm_details?.pipeline && "group-hover/pipe:text-blue-400 group-hover/pipe:border-blue-500/30")}>{r.crm_details?.pipeline_name||r.pipeline_name||r.crm__pipeline__name||"—"}</span>
+                </div>
                 <div className="col-span-3 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60">{r.payment_method}</span></div>
                 <div className="col-span-2 text-xs text-white/40 py-3.5 pl-3">{r.created_at? new Date(r.created_at).toLocaleDateString():"—"}</div>
                 <div className="col-span-4 text-right min-w-0 py-3.5 pl-3">

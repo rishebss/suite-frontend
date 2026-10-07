@@ -28,7 +28,7 @@ export const Stat = ({ label, value, color = "text-white" }) => (
     <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">
       {label}
     </p>
-    <p className={cn("text-lg font-bold tracking-tight", color)}>{value}</p>
+    <p className={cn("truncate text-lg font-bold tracking-tight", color)}>{value}</p>
   </div>
 );
 
