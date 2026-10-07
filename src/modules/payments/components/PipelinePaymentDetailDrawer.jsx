@@ -13,7 +13,7 @@ import { fetchPipeline, fetchSchedules } from "../services/paymentsService";
 
 function MetaRows({ rows }) {
   return (
-    <div className="divide-y divide-white/5">
+    <div className="shrink-0 divide-y divide-white/5">
       {rows.map((r) => (
         <div key={r.label} className="flex items-center justify-between gap-4 py-2.5">
           <span className="text-[10px] uppercase tracking-[0.2em] text-white/30 shrink-0">
@@ -111,14 +111,14 @@ export default function PipelinePaymentDetailDrawer({ open, onClose, pipelineId 
       footer={count > 0 ? `Showing ${payments.length} of ${count} payment${count === 1 ? "" : "s"} · ${fmtINR(total)} collected` : null}
       loading={pipelineLoading || paymentsLoading}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6 flex-1 min-h-0">
         {pipeline?.description ? (
-          <p className="text-[11px] text-white/40 leading-relaxed">{pipeline.description}</p>
+          <p className="shrink-0 text-[11px] text-white/40 leading-relaxed">{pipeline.description}</p>
         ) : null}
 
         <MetaRows rows={overview} />
 
-        <div className="space-y-2">
+        <div className="shrink-0 space-y-2">
           <SectionLabel>Payment Rule</SectionLabel>
           {!activeRule ? (
             <EmptyState>No payment rule configured.</EmptyState>
@@ -127,9 +127,12 @@ export default function PipelinePaymentDetailDrawer({ open, onClose, pipelineId 
           )}
         </div>
 
-        <div className="mt-8 space-y-3">
-          <SectionLabel>Payments Recorded ({count})</SectionLabel>
-          <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-2.5 min-h-[260px] max-h-[340px] overflow-y-auto custom-scrollbar">
+        {/* Records — the only scrollable region of the drawer */}
+        <div className="flex-1 flex flex-col gap-3 min-h-0">
+          <div className="shrink-0">
+            <SectionLabel>Payments Recorded ({count})</SectionLabel>
+          </div>
+          <div className="flex-1 min-h-[200px] rounded-lg border border-zinc-800 bg-white/[0.02] p-2.5 overflow-y-auto custom-scrollbar">
             {payments.length === 0 ? (
               <EmptyState>No payments recorded in this pipeline.</EmptyState>
             ) : (

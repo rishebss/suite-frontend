@@ -6,8 +6,17 @@ import { cn } from '@/lib/utils';
 import RingLoader from '@/components/ui/RingLoader';
 
 const fmtINR=v=>`₹${Number(v||0).toLocaleString("en-IN")}`;
+// The browser's calendar day as YYYY-MM-DD — the same day the cell renders.
+// Built by hand so it never depends on locale data from the runtime.
+const localDay=(iso)=>{
+  if(!iso) return null;
+  const d=new Date(iso);
+  if(Number.isNaN(d.getTime())) return null;
+  const p=(n)=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+};
 
-export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[], onContactClick, onInvoiceClick, onPipelineClick }){
+export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[], onContactClick, onInvoiceClick, onPipelineClick, onDateClick }){
   const [rows,setRows]=useState([]);
   const [totalCount,setTotalCount]=useState(0);
   const [currentPage,setCurrentPage]=useState(1);
@@ -97,7 +106,13 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
                   <span className={cn("px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60 truncate inline-block max-w-full transition-colors", r.crm_details?.pipeline && "group-hover/pipe:text-blue-400 group-hover/pipe:border-blue-500/30")}>{r.crm_details?.pipeline_name||r.pipeline_name||r.crm__pipeline__name||"—"}</span>
                 </div>
                 <div className="col-span-3 py-3.5 pl-3"><span className="px-2 py-0.5 rounded-sm bg-white/[0.02] border border-white/10 text-[10px] text-white/60">{r.payment_method}</span></div>
-                <div className="col-span-2 text-xs text-white/40 py-3.5 pl-3">{r.created_at? new Date(r.created_at).toLocaleDateString():"—"}</div>
+                <div
+                  onClick={()=>{ const day=localDay(r.created_at); if(day) onDateClick?.(day); }}
+                  className={cn("col-span-2 text-xs text-white/40 py-3.5 pl-3 transition-colors", r.created_at && "hover:bg-blue-500/10 group/date cursor-pointer")}
+                  title={r.created_at ? "View payments from this day" : undefined}
+                >
+                  <span className={cn("transition-colors", r.created_at && "group-hover/date:text-blue-400")}>{r.created_at? new Date(r.created_at).toLocaleDateString():"—"}</span>
+                </div>
                 <div className="col-span-4 text-right min-w-0 py-3.5 pl-3">
                   <p className="text-xs font-medium text-white truncate">{r.recorded_by_details ? `${r.recorded_by_details.first_name||""} ${r.recorded_by_details.last_name||""}`.trim() || r.recorded_by_details.email : "—"}</p>
                   <p className="text-[11px] text-white/30 truncate">{r.recorded_by_details?.email||""}</p>

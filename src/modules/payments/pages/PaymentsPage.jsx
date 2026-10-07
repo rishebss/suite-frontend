@@ -223,7 +223,7 @@ export default function PaymentsPage(){
             </div>
           </div>
         </div>
-        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} />}
+        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} onDateClick={(date)=>{ if(date) setDrawer({kind:"field", field:"date", value:date}); }} />}
         {tab==="schedules" && <ScheduleTable rows={schedules} loading={schedulesLoading}/>}
       </main>
       <PaymentSearchModal isOpen={searchModalOpen} onClose={()=>setSearchModalOpen(false)} onSelectResult={openDrawerFromResult} />

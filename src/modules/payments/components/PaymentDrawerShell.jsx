@@ -9,6 +9,7 @@ const ACCENTS = {
   emerald: { chip: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400", icon: "text-emerald-400" },
   blue: { chip: "bg-blue-500/10 border-blue-500/20 text-blue-400", icon: "text-blue-400" },
   purple: { chip: "bg-purple-500/10 border-purple-500/20 text-purple-400", icon: "text-purple-400" },
+  amber: { chip: "bg-amber-500/10 border-amber-500/20 text-amber-400", icon: "text-amber-400" },
 };
 
 export function PaymentRow({ p }) {
@@ -141,7 +142,8 @@ export default function PaymentDrawerShell({
             <RingLoader />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-2 p-5">
+          /* Children fill the panel; only the record list inside scrolls. */
+          <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 flex flex-col p-5">
             {children}
           </div>
         )}

@@ -62,9 +62,9 @@ export default function ContactPaymentDetailDrawer({ open, onClose, contactId })
       footer={count > 0 ? `Showing ${payments.length} of ${count} payment${count === 1 ? "" : "s"} · ${fmtINR(total)} collected` : null}
       loading={contactLoading || paymentsLoading}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6 flex-1 min-h-0">
         {/* Status + identity */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {status ? (
             <span
               className={cn(
@@ -82,7 +82,7 @@ export default function ContactPaymentDetailDrawer({ open, onClose, contactId })
           ) : null}
         </div>
 
-        <div className="rounded-lg border border-zinc-900 bg-white/[0.02] divide-y divide-white/5">
+        <div className="shrink-0 rounded-lg border border-zinc-900 bg-white/[0.02] divide-y divide-white/5">
           {identity.map((row) => (
             <div key={row.label} className="flex items-center gap-3 px-3 py-2.5">
               <row.Icon size={13} className="text-white/25 shrink-0" />
@@ -96,12 +96,12 @@ export default function ContactPaymentDetailDrawer({ open, onClose, contactId })
           ))}
         </div>
 
-        {/* Payments */}
-        <div className="mt-8 space-y-3">
-          <div className="flex items-center gap-2">
+        {/* Payments — the only scrollable region of the drawer */}
+        <div className="flex-1 flex flex-col gap-3 min-h-0">
+          <div className="flex items-center gap-2 shrink-0">
             <SectionLabel>Payment Records ({count})</SectionLabel>
           </div>
-          <div className="rounded-lg border border-zinc-800 bg-white/[0.02] p-2.5 min-h-[260px] max-h-[340px] overflow-y-auto custom-scrollbar">
+          <div className="flex-1 min-h-[200px] rounded-lg border border-zinc-800 bg-white/[0.02] p-2.5 overflow-y-auto custom-scrollbar">
             {payments.length === 0 ? (
               <EmptyState>No payments recorded yet.</EmptyState>
             ) : (
