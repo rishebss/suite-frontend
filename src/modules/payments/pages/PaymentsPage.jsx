@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Wallet, Search, Filter, X, Plus, Check } from "lucide-react";
+import { Wallet, Search, Filter, X, Plus, Check, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchPayments, fetchSchedules, fetchPipelines, fetchAssignableUsers } from "../services/paymentsService";
 import PaymentTable from "../components/PaymentTable";
@@ -8,6 +8,9 @@ import PaymentSearchModal from "../components/PaymentSearchModal";
 import ContactPaymentDetailDrawer from "../components/ContactPaymentDetailDrawer";
 import PipelinePaymentDetailDrawer from "../components/PipelinePaymentDetailDrawer";
 import PaymentFieldDetailDrawer from "../components/PaymentFieldDetailDrawer";
+import PaymentDateDetailDrawer from "../components/PaymentDateDetailDrawer";
+import PipelineSelectModal from "../components/PipelineSelectModal";
+import PaymentActionsModal from "@/modules/crm/components/PaymentActionsModal";
 
 const fmtINR=v=>`₹${Number(v||0).toLocaleString("en-IN")}`;
 export default function PaymentsPage(){
@@ -38,6 +41,8 @@ export default function PaymentsPage(){
   },[userSubOpen]);
   const [searchModalOpen,setSearchModalOpen]=useState(false);
   const [drawer,setDrawer]=useState(null);
+  const [pipelineSelectOpen,setPipelineSelectOpen]=useState(false);
+  const [rulePipeline,setRulePipeline]=useState(null);
   const openDrawerFromResult=(field,row)=>{
     setSearchModalOpen(false);
     if(field==="contact"){
@@ -52,6 +57,9 @@ export default function PaymentsPage(){
     }
     const value=field==="invoice"?row.invoice:field==="method"?row.payment_method:row.payment_for;
     if(value) setDrawer({kind:"field",field,value});
+  };
+  const openDateDrawer=(date)=>{
+    if(date) setDrawer({kind:"date",date});
   };
   const [pipelinesLoading,setPipelinesLoading]=useState(false);
   const [pipelinePage,setPipelinePage]=useState(1);
@@ -74,15 +82,16 @@ export default function PaymentsPage(){
     }).finally(()=>setLoading(false));
   },[]);
   // Rules tab loads its own content independently — fetched only when the tab is opened
-  useEffect(()=>{
-    if(tab!=="schedules") return;
-    let cancelled=false;
+  const refreshSchedules=()=>{
     setSchedulesLoading(true);
     fetchSchedules()
-      .then(s=>{ if(!cancelled) setSchedules(s.data.results||s.data||[]); })
-      .catch(()=>{ if(!cancelled) setSchedules([]); })
-      .finally(()=>{ if(!cancelled) setSchedulesLoading(false); });
-    return ()=>{ cancelled=true; };
+      .then(s=>{ setSchedules(s.data.results||s.data||[]); })
+      .catch(()=>{ setSchedules([]); })
+      .finally(()=>{ setSchedulesLoading(false); });
+  };
+  useEffect(()=>{
+    if(tab!=="schedules") return;
+    refreshSchedules();
   },[tab]);
   useEffect(()=>{
     if(!pipeSubOpen) return;
@@ -121,6 +130,13 @@ export default function PaymentsPage(){
             })}
           </div>
           <div className="flex items-center gap-2">
+            {tab==="schedules" ? (
+              <button onClick={()=>setPipelineSelectOpen(true)} className="h-9 px-3 rounded-md bg-zinc-900/50 border border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800 flex items-center gap-1.5 transition-all">
+                <CreditCard size={14}/>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Create Rule</span>
+              </button>
+            ) : (
+            <>
             <button onClick={()=>setSearchModalOpen(true)} className="h-9 w-9 rounded-md bg-zinc-900/50 border border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800 flex items-center justify-center"><Search size={14}/></button>
             <div className="relative">
               <button onClick={openFilter} className={cn("h-9 w-9 rounded-md border flex items-center justify-center transition-all", (filters.pipeline.length||filters.method.length||filters.user.length) ? "bg-blue-500/20 border-blue-500/30 text-blue-400" : "bg-zinc-900/50 border-zinc-800 text-white/40 hover:text-white hover:bg-zinc-800")}>
@@ -221,15 +237,34 @@ export default function PaymentsPage(){
                 </>
               )}
             </div>
+            </>
+            )}
           </div>
         </div>
-        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} onDateClick={(date)=>{ if(date) setDrawer({kind:"field", field:"date", value:date}); }} />}
+        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} onDateClick={openDateDrawer} />}
         {tab==="schedules" && <ScheduleTable rows={schedules} loading={schedulesLoading}/>}
       </main>
       <PaymentSearchModal isOpen={searchModalOpen} onClose={()=>setSearchModalOpen(false)} onSelectResult={openDrawerFromResult} />
       <ContactPaymentDetailDrawer key={`contact-${drawer?.kind==="contact"?drawer.id:"none"}`} open={drawer?.kind==="contact"} onClose={()=>setDrawer(null)} contactId={drawer?.id} />
       <PipelinePaymentDetailDrawer key={`pipeline-${drawer?.kind==="pipeline"?drawer.id:"none"}`} open={drawer?.kind==="pipeline"} onClose={()=>setDrawer(null)} pipelineId={drawer?.id} />
       <PaymentFieldDetailDrawer key={`field-${drawer?.kind==="field"?`${drawer.field}-${drawer.value}`:"none"}`} open={drawer?.kind==="field"} onClose={()=>setDrawer(null)} field={drawer?.field} value={drawer?.value} />
+      <PaymentDateDetailDrawer key={`date-${drawer?.kind==="date"?drawer.date:"none"}`} open={drawer?.kind==="date"} onClose={()=>setDrawer(null)} date={drawer?.date} />
+      <PipelineSelectModal
+        open={pipelineSelectOpen}
+        onClose={()=>setPipelineSelectOpen(false)}
+        onSelect={(pipeline)=>{
+          setPipelineSelectOpen(false);
+          setRulePipeline(pipeline);
+        }}
+      />
+      <PaymentActionsModal
+        isOpen={!!rulePipeline}
+        onClose={()=>{
+          setRulePipeline(null);
+          if (tab==="schedules") refreshSchedules();
+        }}
+        pipeline={rulePipeline}
+      />
     </div>
   );
 }

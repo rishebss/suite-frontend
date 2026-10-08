@@ -6,7 +6,7 @@ import RingLoader from '@/components/ui/RingLoader';
 import axios from 'axios';
 import { cn } from '@/lib/utils';
 
-const CreatePipelineModal = ({ isOpen, onClose, onSuccess, onDelete, onUpdate, pipelines = [] }) => {
+const CreatePipelineModal = ({ isOpen, onClose, onSuccess, onDelete, onUpdate, pipelines = [], zIndex = "z-[500]" }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingPipeline, setEditingPipeline] = useState(null);
   const [name, setName] = useState('');
@@ -163,8 +163,8 @@ const CreatePipelineModal = ({ isOpen, onClose, onSuccess, onDelete, onUpdate, p
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className={`fixed inset-0 ${zIndex} flex items-center justify-center p-4`}>
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
         {/* Header */}
