@@ -9,3 +9,4 @@ export const fetchAssignableUsers = (params = {}) =>
 export const fetchContact = (id) => axios.get(`/api/contacts/${id}/`);
 export const fetchPipeline = (id) => axios.get(`/api/crm/pipelines/${id}/`);
 export const fetchDeals = (params = {}) => axios.get("/api/crm/pipeline/", { params });
+export const fetchActor = (id) => axios.get(`/api/users/${id}/`);

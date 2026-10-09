@@ -16,7 +16,7 @@ const localDay=(iso)=>{
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
 };
 
-export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[], onContactClick, onInvoiceClick, onPipelineClick, onDateClick }){
+export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFilter=[], userFilter=[], onContactClick, onInvoiceClick, onPipelineClick, onDateClick, onActorClick }){
   const [rows,setRows]=useState([]);
   const [totalCount,setTotalCount]=useState(0);
   const [currentPage,setCurrentPage]=useState(1);
@@ -76,7 +76,7 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
             <p className="text-sm text-white/20">No payments found</p>
           </div>
         ) : (
-          <div ref={listRef} className="overflow-y-auto custom-scrollbar flex-1">
+          <div ref={listRef} className="overflow-y-auto custom-scrollbar flex-1 overflow-x-hidden">
             {rows.map((r, idx)=>(
               <div key={r.id} className="grid grid-cols-24 px-8 [&>*]:pr-3 group hover:bg-white/[0.02] transition-all divide-x divide-zinc-800 border-b border-zinc-800">
                 <div className="col-span-1 text-xs text-white/25 py-3.5 pl-3">{(currentPage-1)*pageSize+idx+1}</div>
@@ -113,8 +113,15 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
                 >
                   <span className={cn("transition-colors", r.created_at && "group-hover/date:text-blue-400")}>{r.created_at? new Date(r.created_at).toLocaleDateString():"—"}</span>
                 </div>
-                <div className="col-span-4 text-right min-w-0 py-3.5 pl-3">
-                  <p className="text-xs font-medium text-white truncate">{r.recorded_by_details ? `${r.recorded_by_details.first_name||""} ${r.recorded_by_details.last_name||""}`.trim() || r.recorded_by_details.email : "—"}</p>
+                <div
+                  onClick={()=>{
+                    const actorId = r.recorded_by_details?.id || r.recorded_by || null;
+                    if(actorId && onActorClick) onActorClick(actorId, r.recorded_by_details || null);
+                  }}
+                  className={cn("col-span-4 min-w-0 flex flex-col items-start gap-0.5 py-3.5 pl-3 transition-colors", r.recorded_by_details && "hover:bg-blue-500/10 group/actor cursor-pointer", !r.recorded_by_details && "hover:bg-blue-500/10 cursor-default")}
+                  title={r.recorded_by_details ? "View payments recorded by this actor" : undefined}
+                >
+                  <p className={cn("text-xs font-medium text-white truncate transition-colors", r.recorded_by_details && "group-hover/actor:text-blue-400")}>{r.recorded_by_details ? `${r.recorded_by_details.first_name||""} ${r.recorded_by_details.last_name||""}`.trim() || r.recorded_by_details.email : "—"}</p>
                   <p className="text-[11px] text-white/30 truncate">{r.recorded_by_details?.email||""}</p>
                 </div>
               </div>

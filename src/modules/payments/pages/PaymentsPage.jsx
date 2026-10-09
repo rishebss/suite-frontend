@@ -9,6 +9,7 @@ import ContactPaymentDetailDrawer from "../components/ContactPaymentDetailDrawer
 import PipelinePaymentDetailDrawer from "../components/PipelinePaymentDetailDrawer";
 import PaymentFieldDetailDrawer from "../components/PaymentFieldDetailDrawer";
 import PaymentDateDetailDrawer from "../components/PaymentDateDetailDrawer";
+import ActorPaymentDetailDrawer from "../components/ActorPaymentDetailDrawer";
 import PipelineSelectModal from "../components/PipelineSelectModal";
 import PaymentActionsModal from "@/modules/crm/components/PaymentActionsModal";
 
@@ -57,6 +58,9 @@ export default function PaymentsPage(){
     }
     const value=field==="invoice"?row.invoice:field==="method"?row.payment_method:row.payment_for;
     if(value) setDrawer({kind:"field",field,value});
+  };
+  const openActorDrawer=(actorId, actorDetails)=>{
+    if(actorId) setDrawer({kind:"actor",id:actorId, actorDetails});
   };
   const openDateDrawer=(date)=>{
     if(date) setDrawer({kind:"date",date});
@@ -241,12 +245,13 @@ export default function PaymentsPage(){
             )}
           </div>
         </div>
-        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} onDateClick={openDateDrawer} />}
+        {tab==="logs" && <PaymentTable pipelineIds={filters.pipeline} methodFilter={filters.method} userFilter={filters.user} onContactClick={(id)=>{ if(id) setDrawer({kind:"contact", id}); }} onInvoiceClick={(invoice)=>{ if(invoice) setDrawer({kind:"field", field:"invoice", value:invoice}); }} onPipelineClick={(id)=>{ if(id) setDrawer({kind:"pipeline", id}); }} onDateClick={openDateDrawer} onActorClick={openActorDrawer} />}
         {tab==="schedules" && <ScheduleTable rows={schedules} loading={schedulesLoading}/>}
       </main>
       <PaymentSearchModal isOpen={searchModalOpen} onClose={()=>setSearchModalOpen(false)} onSelectResult={openDrawerFromResult} />
       <ContactPaymentDetailDrawer key={`contact-${drawer?.kind==="contact"?drawer.id:"none"}`} open={drawer?.kind==="contact"} onClose={()=>setDrawer(null)} contactId={drawer?.id} />
       <PipelinePaymentDetailDrawer key={`pipeline-${drawer?.kind==="pipeline"?drawer.id:"none"}`} open={drawer?.kind==="pipeline"} onClose={()=>setDrawer(null)} pipelineId={drawer?.id} />
+      <ActorPaymentDetailDrawer key={`actor-${drawer?.kind==="actor"?drawer.id:"none"}`} open={drawer?.kind==="actor"} onClose={()=>setDrawer(null)} actorId={drawer?.id} actorDetails={drawer?.actorDetails} />
       <PaymentFieldDetailDrawer key={`field-${drawer?.kind==="field"?`${drawer.field}-${drawer.value}`:"none"}`} open={drawer?.kind==="field"} onClose={()=>setDrawer(null)} field={drawer?.field} value={drawer?.value} />
       <PaymentDateDetailDrawer key={`date-${drawer?.kind==="date"?drawer.date:"none"}`} open={drawer?.kind==="date"} onClose={()=>setDrawer(null)} date={drawer?.date} />
       <PipelineSelectModal

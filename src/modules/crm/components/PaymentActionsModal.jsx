@@ -62,11 +62,15 @@ export default function PaymentActionsModal({ isOpen, onClose, pipeline, schedul
     resetForm();
     if (schedule?.id) {
       applyRule(schedule);
+      setMode("view");
       return;
     }
     if (pipeline?.amount != null || pipeline?.payment_for != null) {
       applyRule({ ...pipeline, id: pipeline?.scheduleId ?? pipeline?.schedule_id ?? null });
-      if (pipeline?.scheduleId ?? pipeline?.schedule_id) return;
+      if (pipeline?.scheduleId ?? pipeline?.schedule_id) {
+        setMode("view");
+        return;
+      }
     }
     const pid = pipeline?.id;
     if (!pid) return;
