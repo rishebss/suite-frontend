@@ -21,7 +21,7 @@ export default function PaymentTable({ searchQuery="", pipelineIds=[], methodFil
   const [totalCount,setTotalCount]=useState(0);
   const [currentPage,setCurrentPage]=useState(1);
   const [isLoading,setIsLoading]=useState(true);
-  const pageSize=20;
+  const pageSize=100;
   const listRef=useRef(null);
 
   const fetchData=useCallback(async(page=1, search="", pipelines=[], methods=[], users=[])=>{

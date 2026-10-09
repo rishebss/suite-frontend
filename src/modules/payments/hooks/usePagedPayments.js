@@ -9,7 +9,7 @@ import { fetchPayments } from "../services/paymentsService";
  * (2 SQL queries) even though the API is reached over a slow link. Larger
  * pages only speed up the first paint, which is already under half a second.
  */
-export const RECORDS_PAGE_SIZE = 20;
+export const RECORDS_PAGE_SIZE = 100;
 
 const asList = (d) => (Array.isArray(d) ? d : d?.results || []);
 
